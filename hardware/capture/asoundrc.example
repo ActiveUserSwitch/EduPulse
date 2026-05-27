@@ -1,0 +1,26 @@
+# Example ~/.asoundrc for EduPulse + Behringer UCA222 on Pi 4
+#
+# Copy this to ~/.asoundrc and adjust as needed.
+
+pcm.!default {
+    type hw
+    card UCA222
+    device 0
+}
+
+ctl.!default {
+    type hw
+    card UCA222
+}
+
+# Dedicated capture device with sensible buffer settings
+pcm.edupulse_capture {
+    type hw
+    card UCA222
+    device 0
+    format S16_LE
+    rate 16000
+    channels 2
+    period_size 1024
+    buffer_size 4096
+}

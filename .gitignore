@@ -1,0 +1,75 @@
+# EduPulse .gitignore
+
+# Raw audio recordings (critical - these can be large and contain sensitive data)
+*.wav
+*.flac
+*.mp3
+*.ogg
+test_recordings/
+raw/
+audio/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+edupulse-env/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+*.cache
+
+# Large model files (future Whisper models, etc.)
+*.bin
+*.pt
+models/
+
+# Environment / secrets
+.env
+.env.local
+secrets/
+
+# Data that should not be committed
+data/raw/
+data/transcripts/
