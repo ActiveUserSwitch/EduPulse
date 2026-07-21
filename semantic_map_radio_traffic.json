@@ -1,0 +1,495 @@
+{
+  "nodes": [
+    {
+      "term": "thank you",
+      "count": 7,
+      "critical_count": 0
+    },
+    {
+      "term": "ms. tracy strickland",
+      "count": 5,
+      "critical_count": 0
+    },
+    {
+      "term": "strickland",
+      "count": 5,
+      "critical_count": 0
+    },
+    {
+      "term": "10-4",
+      "count": 5,
+      "critical_count": 0
+    },
+    {
+      "term": "moore",
+      "count": 4,
+      "critical_count": 0
+    },
+    {
+      "term": "mr. eldridge moore",
+      "count": 4,
+      "critical_count": 0
+    },
+    {
+      "term": "media center",
+      "count": 4,
+      "critical_count": 1
+    },
+    {
+      "term": "i'll be right there",
+      "count": 3,
+      "critical_count": 0
+    },
+    {
+      "term": "hatfield",
+      "count": 3,
+      "critical_count": 0
+    },
+    {
+      "term": "marvel",
+      "count": 3,
+      "critical_count": 0
+    },
+    {
+      "term": "administrator",
+      "count": 3,
+      "critical_count": 1
+    },
+    {
+      "term": "admin",
+      "count": 3,
+      "critical_count": 1
+    },
+    {
+      "term": "on my way",
+      "count": 3,
+      "critical_count": 0
+    },
+    {
+      "term": "ms. shelley gordon",
+      "count": 2,
+      "critical_count": 0
+    },
+    {
+      "term": "gordon",
+      "count": 2,
+      "critical_count": 0
+    },
+    {
+      "term": "classroom",
+      "count": 2,
+      "critical_count": 0
+    },
+    {
+      "term": "mr. adrian atkinson",
+      "count": 2,
+      "critical_count": 0
+    },
+    {
+      "term": "atkinson",
+      "count": 2,
+      "critical_count": 0
+    },
+    {
+      "term": "davison",
+      "count": 2,
+      "critical_count": 0
+    },
+    {
+      "term": "mr. goldschilds",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "term": "mr. joseph hatfield",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "term": "ms. stephanie secker",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "term": "secker",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "term": "fighting",
+      "count": 1,
+      "critical_count": 1
+    },
+    {
+      "term": "fight",
+      "count": 1,
+      "critical_count": 1
+    },
+    {
+      "term": "mr. christopher powlen",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "term": "powlen",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "term": "mr. nicholas horne",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "term": "horne",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "term": "ms. morris'",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "term": "morris",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "term": "bio",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "term": "ms. robyn mobley",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "term": "mr. samuel mobley",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "term": "mobley",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "term": "miss you",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "term": "simmeth",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "term": "go for",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "term": "boyes",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "term": "mr. michael boyes",
+      "count": 1,
+      "critical_count": 0
+    }
+  ],
+  "edges": [
+    {
+      "a": "ms. tracy strickland",
+      "b": "strickland",
+      "count": 5,
+      "critical_count": 0
+    },
+    {
+      "a": "moore",
+      "b": "mr. eldridge moore",
+      "count": 4,
+      "critical_count": 0
+    },
+    {
+      "a": "i'll be right there",
+      "b": "thank you",
+      "count": 3,
+      "critical_count": 0
+    },
+    {
+      "a": "hatfield",
+      "b": "marvel",
+      "count": 3,
+      "critical_count": 0
+    },
+    {
+      "a": "admin",
+      "b": "administrator",
+      "count": 3,
+      "critical_count": 1
+    },
+    {
+      "a": "10-4",
+      "b": "on my way",
+      "count": 3,
+      "critical_count": 0
+    },
+    {
+      "a": "gordon",
+      "b": "ms. shelley gordon",
+      "count": 2,
+      "critical_count": 0
+    },
+    {
+      "a": "classroom",
+      "b": "ms. shelley gordon",
+      "count": 2,
+      "critical_count": 0
+    },
+    {
+      "a": "classroom",
+      "b": "gordon",
+      "count": 2,
+      "critical_count": 0
+    },
+    {
+      "a": "media center",
+      "b": "moore",
+      "count": 2,
+      "critical_count": 0
+    },
+    {
+      "a": "media center",
+      "b": "mr. eldridge moore",
+      "count": 2,
+      "critical_count": 0
+    },
+    {
+      "a": "administrator",
+      "b": "media center",
+      "count": 2,
+      "critical_count": 1
+    },
+    {
+      "a": "admin",
+      "b": "media center",
+      "count": 2,
+      "critical_count": 1
+    },
+    {
+      "a": "atkinson",
+      "b": "mr. adrian atkinson",
+      "count": 2,
+      "critical_count": 0
+    },
+    {
+      "a": "davison",
+      "b": "thank you",
+      "count": 2,
+      "critical_count": 0
+    },
+    {
+      "a": "moore",
+      "b": "mr. goldschilds",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "mr. eldridge moore",
+      "b": "mr. goldschilds",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "hatfield",
+      "b": "mr. joseph hatfield",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "marvel",
+      "b": "mr. joseph hatfield",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "ms. stephanie secker",
+      "b": "secker",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "fighting",
+      "b": "media center",
+      "count": 1,
+      "critical_count": 1
+    },
+    {
+      "a": "fight",
+      "b": "fighting",
+      "count": 1,
+      "critical_count": 1
+    },
+    {
+      "a": "fight",
+      "b": "media center",
+      "count": 1,
+      "critical_count": 1
+    },
+    {
+      "a": "administrator",
+      "b": "fighting",
+      "count": 1,
+      "critical_count": 1
+    },
+    {
+      "a": "administrator",
+      "b": "fight",
+      "count": 1,
+      "critical_count": 1
+    },
+    {
+      "a": "admin",
+      "b": "fighting",
+      "count": 1,
+      "critical_count": 1
+    },
+    {
+      "a": "admin",
+      "b": "fight",
+      "count": 1,
+      "critical_count": 1
+    },
+    {
+      "a": "10-4",
+      "b": "thank you",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "mr. christopher powlen",
+      "b": "powlen",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "horne",
+      "b": "mr. nicholas horne",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "10-4",
+      "b": "ms. morris'",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "10-4",
+      "b": "morris",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "10-4",
+      "b": "bio",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "morris",
+      "b": "ms. morris'",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "bio",
+      "b": "ms. morris'",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "bio",
+      "b": "morris",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "mr. samuel mobley",
+      "b": "ms. robyn mobley",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "mobley",
+      "b": "ms. robyn mobley",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "mobley",
+      "b": "mr. samuel mobley",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "miss you",
+      "b": "thank you",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "moore",
+      "b": "ms. tracy strickland",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "moore",
+      "b": "strickland",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "mr. eldridge moore",
+      "b": "ms. tracy strickland",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "mr. eldridge moore",
+      "b": "strickland",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "go for",
+      "b": "simmeth",
+      "count": 1,
+      "critical_count": 0
+    },
+    {
+      "a": "boyes",
+      "b": "mr. michael boyes",
+      "count": 1,
+      "critical_count": 0
+    }
+  ],
+  "meta": {
+    "total_transcripts_processed": 143,
+    "unique_entities": 40,
+    "unique_associations": 46,
+    "note": "Post-accumulation only. Built EXCLUSIVELY from hand-coded day (2026-06-05_last-day-2) and onward (graduation 2026-06-09) using large-v3 sidecars + human gold transcripts from validation CSVs. Earlier days (2026-06-02/03/04 etc.) deliberately excluded to avoid noise from light-model data. Not used for recognition, transcription, prompting, or real-time categorization.",
+    "hand_coded_day_onward_only": true,
+    "included_sources": [
+      "/home/joseph/edupulse/captures/2026-06-05_last-day-2",
+      "/home/joseph/edupulse/captures/2026-06-09_2026-06-08_graduation",
+      "validation/focused_transcription_validation.csv",
+      "validation/graduation_vad_transcription_focused.csv"
+    ]
+  }
+}
