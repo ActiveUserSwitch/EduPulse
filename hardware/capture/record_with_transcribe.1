@@ -1,0 +1,118 @@
+.TH RECORD_WITH_TRANSCRIBE 1 "June 2026" "EduPulse" "EduPulse User Commands"
+.SH NAME
+record_with_transcribe \- real-time VAD capture of school radio PTTs with heavy-model (large-v3) transcription and sidecar generation
+.SH SYNOPSIS
+.B python hardware/capture/record_with_transcribe.py
+.RI [ OPTIONS ]
+.SH DESCRIPTION
+.B record_with_transcribe.py
+is the primary tool for full-day radio capture sessions.
+
+It performs real-time energy-based VAD on the radio audio (PX650 + UCA222), saves each transmission as a high-fidelity stereo .wav, runs the heaviest available Whisper model (large-v3 by default) for transcription, performs categorization and incident linking, and writes rich sidecar .json files.
+
+All stored sidecar data is produced exclusively with the heaviest model. Live terminal output for transcriptions appears when the heavy model finishes each segment (delay is normal and acceptable). The VAD/capture loop itself is real-time.
+
+The program auto-discovers the standard fingerprint files
+.I hardware/capture/staff_names.txt
+and
+.I hardware/capture/common_words.txt
+if they exist next to the script (or in the expected locations). This means a production command can be very short.
+
+.SH OPTIONS
+The most important options have good defaults for normal (cold-start, no pre-flight) use with the heavy model.
+
+.TP
+.BR \-\-data\-dir \ DIR
+Base directory for captures. A dated + session-labeled subdirectory will be created inside. Default: ~/edupulse/captures
+
+.TP
+.BR \-\-session ", " \-\-session\-label \ LABEL
+Required for normal use. A short label for the session (e.g. "graduation-2026", "august-week1"). Becomes part of the output directory name.
+
+.TP
+.BR \-\-skip\-calibration ", " \-\-no\-calibration
+Skip the initial 1.5 s background noise measurement. This is the
+.B default
+for cold-start / no pre-flight operation. The system seeds a conservative quiet floor and adapts quickly from real gaps.
+
+.TP
+.BR \-\-calibration
+Perform the old 1.5 s initial background measurement (rarely needed).
+
+.TP
+.BR \-\-model \ MODEL
+Whisper model name (default: large-v3). The program policy is to use only the heaviest model for transcription and sidecars. Lighter models are for testing and will print a warning.
+
+.TP
+.BR \-\-known\-staff\-file \ FILE
+Text file with one full staff name per line ("Title First Last" format recommended). Used for the audio fingerprint (better prompt + correct role vs student treatment in IncidentTracker). Auto-discovered from hardware/capture/staff_names.txt if not supplied.
+
+.TP
+.BR \-\-common\-words\-file \ FILE
+Text file with common radio words/phrases. Auto-discovered from hardware/capture/common_words.txt if not supplied.
+
+.TP
+.BR \-\-pre\-roll\-sec \ SECONDS
+Seconds of audio to keep from just before VAD onset (default 0.50). Protects the beginning of transmissions.
+
+.TP
+.BR \-\-tail\-padding\-sec \ SECONDS
+Extra low-energy tail to keep after silence is detected (default 0.60). Prevents chopping the end of transmissions and makes files sound more natural.
+
+.TP
+.BR \-\-silence\-timeout \ SECONDS
+Seconds of silence before a transmission is considered finished (default 1.0).
+
+.TP
+.BR \-\-skip\-calibration
+See above (this is the normal mode).
+
+.TP
+.BR \-\-no\-transcribe
+Pure capture mode: write .wav + minimal metadata only. No Whisper work.
+
+Other options exist for device selection, testing limits, etc. Run with
+.B \-\-help
+for the full list.
+
+.SH EXAMPLES
+Minimal production command (all important things are now defaulted or auto-discovered):
+
+.nf
+cd ~/Documents/GrokBuild
+source ~/edupulse-env/bin/activate
+python hardware/capture/record_with_transcribe.py \\
+    --session "august-2026-week1" \\
+    --skip-calibration
+.fi
+
+With explicit fingerprints (only needed if you are not using the standard files next to the script):
+
+.nf
+python hardware/capture/record_with_transcribe.py \\
+    --session "test" \\
+    --skip-calibration \\
+    --known-staff-file hardware/capture/staff_names.txt \\
+    --common-words-file hardware/capture/common_words.txt
+.fi
+
+.SH FILES
+.TP
+.I hardware/capture/staff_names.txt
+One full staff name per line ("Title First Last"). Auto-loaded for the audio fingerprint and IncidentTracker role logic.
+
+.TP
+.I hardware/capture/common_words.txt
+Common radio words and short phrases. Auto-loaded for the audio fingerprint.
+
+.TP
+.I ~/edupulse/captures/YYYY-MM-DD_session-label/
+Output directory containing tx_*.wav, tx_*.json sidecars (heavy model), session_manifest.jsonl, and session_summary.json.
+
+.SH SEE ALSO
+.BR test/test_whisper.py (1),
+.BR hardware/capture/README.md
+.SH AUTHOR
+EduPulse project (user-driven radio capture + analysis pipeline for school coordination studies).
+.SH NOTES
+All canonical sidecar data is produced with the heaviest Whisper model available at run time (large-v3 by default). The live capture (VAD + raw .wav writing) is real-time. Transcription and sidecar population for each transmission occur when the heavy model finishes that segment.

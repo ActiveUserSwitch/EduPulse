@@ -2,6 +2,8 @@
 
 This is your practical step-by-step guide for the first day you have the UCA222 in hand.
 
+> **Note (laptop continuation):** The wiring guide and all scripts are now in this git repo under `hardware/`. The old "copy from local workspace" steps below are historical from the initial Pi session. When working from a fresh clone on the Pi you can simply `git pull` (or rsync from laptop clone).
+
 **Current Constraints (as of now):**
 - Raspberry Pi 4 (8GB)
 - Only microSD card storage available (~19 GB free on root)

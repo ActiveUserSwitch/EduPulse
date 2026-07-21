@@ -28,15 +28,31 @@ DEFAULT_DURATION = 30
 DEVICE = None  # Will try to auto-detect UCA222
 # ===========================================================
 
-
 def find_uca222_device():
-    """Try to find the UCA222 in the list of devices."""
+    """Try to find the UCA222 (or compatible USB audio codec) in the list of devices."""
     devices = sd.query_devices()
+    candidates = []
     for i, dev in enumerate(devices):
-        if "UCA222" in dev['name'] or "BEHRINGER" in dev['name'].upper():
-            print(f"Found likely UCA222: [{i}] {dev['name']}")
-            return i
-    print("Could not auto-detect UCA222. Using default input device.")
+        if dev.get("max_input_channels", 0) < 1:
+            continue
+        name = dev["name"].lower()
+        score = 0
+        if "uca222" in name or "behringer" in name:
+            score = 100
+        elif "pcm2902" in name:
+            score = 80
+        elif "usb audio codec" in name or "codec" in name:
+            score = 60
+        elif "usb audio" in name:
+            score = 40
+        if score > 0:
+            candidates.append((score, i, dev["name"]))
+    if candidates:
+        candidates.sort(reverse=True)
+        best_score, best_idx, best_name = candidates[0]
+        print(f"Found likely radio input: [{best_idx}] {best_name}")
+        return best_idx
+    print("Could not auto-detect radio input device. Using default input device.")
     return None
 
 
