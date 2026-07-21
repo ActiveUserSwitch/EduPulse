@@ -64,10 +64,34 @@ def get_levels(audio: np.ndarray) -> dict:
 
 
 def find_uca222():
+    """Find a likely radio input device (UCA222 or compatible USB audio codec).
+
+    Enhanced to also match generic PCM2902 / USB Audio CODEC devices that
+    the user may be using on laptop for testing (same chipset as UCA222).
+    """
+    import sounddevice as sd
     devices = sd.query_devices()
+    candidates = []
     for i, d in enumerate(devices):
-        if 'uca222' in d['name'].lower() or 'behringer' in d['name'].lower():
-            return i
+        if d.get("max_input_channels", 0) < 1:
+            continue
+        name = d["name"].lower()
+        score = 0
+        if "uca222" in name or "behringer" in name:
+            score = 100
+        elif "pcm2902" in name:
+            score = 80
+        elif "usb audio codec" in name or "codec" in name:
+            score = 60
+        elif "usb audio" in name:
+            score = 40
+        if score > 0:
+            candidates.append((score, i, d["name"]))
+    if candidates:
+        candidates.sort(reverse=True)
+        best_score, best_idx, best_name = candidates[0]
+        print(f"Found likely radio input: [{best_idx}] {best_name}")
+        return best_idx
     return None
 
 
