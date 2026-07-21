@@ -1,0 +1,155 @@
+.TH Z_TABLE_COLADARCI 1 "June 2026" "Coladarci Z-Table Utilities" "User Commands"
+.SH NAME
+z_table_coladarci \- Exact z-table lookups from Coladarci et al. Appendix C, Table A for hypothesis testing
+.SH SYNOPSIS
+.B python z_table_coladarci_appendix_c.py
+[\fB\-\-z\fR Z]
+[\fB\-\-p\-value\fR]
+[\fB\-\-critical\fR]
+[\fB\-\-alpha\fR ALPHA]
+[\fB\-\-tails\fR {1,2}]
+[\fB\-\-batch\-stdin\fR]
+[\fB\-\-batch\-csv\fR FILE]
+[\fB\-\-batch\-jsonl\fR FILE]
+[\fB\-\-batch\-jsonl\-stdin\fR]
+[\fB\-\-z\-key\fR KEY]
+[\fB\-\-add\-columns\fR COLS]
+[\fB\-\-output\fR FILE]
+[\fB\-\-format\fR {human,csv,json,jsonl}]
+[\fB\-\-demo\fR]
+[\fB\-h\fR]
+.SH DESCRIPTION
+.B z_table_coladarci
+provides \fIexact\fR values from the normal curve (z) table in
+.IR "Fundamentals of Statistical Reasoning in Education"
+(Coladarci et al.), Appendix C, Table A.
+
+All lookups round the input z to two decimal places exactly as a student does when using the printed book.
+No external statistical libraries are used for the core table lookup; every number is taken directly from the textbook.
+
+This is a generic utility for researchers and students performing hypothesis tests that rely on the normal distribution (z-tests or large-sample approximations to t-tests). It returns:
+
+- Area between the mean and z (textbook Column 2)
+- Tail probability / area beyond z (textbook Column 3)
+- One- or two-tailed p-values
+- Critical z values for a given alpha level
+
+It is designed to be used from the command line (with support for CSV and JSONL batch processing and standard input piping) or imported as a Python module for integration into analysis scripts and validation pipelines.
+
+The module and man page deliberately avoid project-specific branding so the tool can be reused across different statistical projects while still matching the exact printed table from the referenced textbook (Chapter 6 for normal curve interpretation; Chapter 11 for z-test logic, p-values, and critical regions).
+.SH OPTIONS
+.TP
+.BR \-\-z " " Z
+Look up a single z-value (positive or negative). The value is rounded to two decimals internally.
+.TP
+.BR \-\-p\-value
+With \fB\-\-z\fR, compute and report the p-value. Combine with \fB\-\-tails\fR.
+.TP
+.BR \-\-critical
+Report the critical z value(s) that leave the desired tail probability for a given alpha. Requires \fB\-\-alpha\fR (default 0.05).
+.TP
+.BR \-\-alpha " " ALPHA
+Significance level used with \fB\-\-critical\fR (e.g. 0.05, 0.01, 0.10).
+.TP
+.BR \-\-tails " " {1,2}
+1 = one-tailed, 2 = two-tailed (default). Two-tailed is the standard choice for most non-directional hypotheses in Chapter 11.
+.TP
+.BR \-\-batch\-stdin
+Read one numeric z value per line from standard input. Ideal for quick shell pipes.
+.TP
+.BR \-\-batch\-csv " " FILE
+Read a CSV file. Looks for the column named by \fB\-\-z\-key\fR (default "z"), computes the requested columns, and writes an augmented CSV.
+.TP
+.BR \-\-batch\-jsonl " " FILE
+Process a JSONL file (one JSON object per line). This is the native format for EduPulse session manifests and many validation intermediates. The script looks for the key given by \fB\-\-z\-key\fR (falls back to common alternatives such as observed_z, z_stat). Appended fields are written back.
+.TP
+.BR \-\-batch\-jsonl\-stdin
+Same as \fB\-\-batch\-jsonl\fR but reads the stream from stdin. Perfect for:
+.br
+cat manifest.jsonl | python z_table... --batch-jsonl-stdin ...
+.TP
+.BR \-\-z\-key ", " \-\-z\-column " " KEY
+Field name (JSON) or column name (CSV) that contains the z-statistic you want to look up. Default: "z".
+.TP
+.BR \-\-add\-columns " " COLS
+Comma-separated list of textbook values to compute in batch mode. Valid tokens:
+.br
+area  - Area between the mean and z (Column 2)
+.br
+tail  - Area beyond z (Column 3 / tail probability)
+.br
+p     - p-value (respecting \fB\-\-tails\fR)
+.br
+Default: "area,tail,p"
+.TP
+.BR \-\-output " " FILE
+Destination for batch output. When omitted, results are written to stdout. Format is controlled by \fB\-\-format\fR.
+.TP
+.BR \-\-format " " {human,csv,json,jsonl}
+Output style for batch results and single-value queries.
+.br
+human  - readable text (default)
+.br
+csv    - comma-separated values
+.br
+json   - pretty JSON array/object
+.br
+jsonl  - one JSON object per line (excellent for further piping)
+.TP
+.BR \-\-demo
+Run the built-in educational demonstration (classic z = 1.96, critical values, symmetry, etc.) and exit. Useful for teaching or quick sanity checks.
+.TP
+.BR \-h ", " \-\-help
+Show this help message and exit.
+.SH EXAMPLES
+Look up a single value and its two-tailed p-value:
+.br
+  python z_table_coladarci_appendix_c.py --z 1.96 --p-value --tails 2
+
+Find the critical value used in a typical alpha = .05 test:
+.br
+  python z_table_coladarci_appendix_c.py --critical --alpha 0.05 --tails 2
+
+Pipe a stream of z-statistics (one per line):
+.br
+  echo -e "1.96\n2.58\n-1.65" | python z_table_coladarci_appendix_c.py --batch-stdin --tails 2 --format csv
+
+Process a JSONL research data file and add textbook-derived columns:
+.br
+  python z_table_coladarci_appendix_c.py \\
+      --batch-jsonl study_data.jsonl \\
+      --z-key observed_z --add-columns area,tail,p \\
+      --output study_data_with_pvalues.csv
+
+Same thing from a pipe:
+.br
+  cat results.jsonl | python z_table_coladarci_appendix_c.py --batch-jsonl-stdin --z-key z_stat --format jsonl
+
+Use inside Python (for analysis scripts or validation pipelines):
+.br
+  from z_table_coladarci_appendix_c import get_p_value, find_critical_z
+  p = get_p_value(my_computed_z, tails=2)
+  crit = find_critical_z(0.05, tails=2)
+.SH INTEGRATION
+The Python API is intentionally simple so it can be dropped into any analysis or validation script:
+
+  from z_table_coladarci_appendix_c import get_p_value as textbook_p_value
+
+Use \fBtextbook_p_value(observed_z, tails=2)\fR (or the critical value function) whenever you are performing or reporting z-based tests that should match the exact printed table in the Coladarci textbook.
+
+JSONL and CSV batch modes are provided because many research pipelines produce per-observation statistics in these formats.
+.SH FILES
+.TP
+.I z_table_coladarci_appendix_c.py
+The executable Python module containing the hard-coded table and lookup functions.
+.TP
+.I man/z_table_coladarci.1
+This manual page.
+.SH SEE ALSO
+Coladarci, T. et al. \fIFundamentals of Statistical Reasoning in Education\fR (source of Appendix C, Table A).
+.br
+Standard references on z-tests and the normal approximation to the t-test for large samples.
+.SH AUTHOR
+Generic utility derived from textbook table for reproducible statistical work.
+.SH COPYRIGHT
+The numeric values are taken verbatim from the referenced textbook. The code is provided for educational and research use.
