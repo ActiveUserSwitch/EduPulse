@@ -1,0 +1,19 @@
+# Template for staff_names.txt
+# One full name (Title First Last) per line.
+# Copy this file, fill it with real staff (with titles and first names where known),
+# and keep the live version (staff_names.txt) up to date.
+# These are used for:
+#   - Forcing real staff to be treated as roles (not fake students) in IncidentTracker
+#   - Biasing the Whisper model via the initial prompt ("Known staff and roles include: ...")
+
+# Example (use your real list with titles and first names):
+Mr. Adrian Atkinson
+Ms. Maria BarrosoSobejano
+Dr. Tracy Strickland
+Nurse Shannon Steffler
+Captain Joseph Hatfield
+Sergeant Bryan Marvel
+Mr. Eldridge Moore
+Mrs. Stephanie Secker
+Miss Ashley Klepfer
+Ms. Deborahk Chandler

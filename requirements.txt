@@ -1,0 +1,21 @@
+# EduPulse Python dependencies
+# For audio capture (record_*.py, test_*.py, check_pi_environment.py)
+sounddevice>=0.4.6
+soundfile>=0.12.1
+numpy>=1.26
+
+# Optional / future (used in tests and planned analysis)
+scipy>=1.13
+faster-whisper>=1.0.0   # for test/test_whisper.py and future transcription pipeline
+
+# Dev / convenience (optional)
+# pip install -r requirements.txt
+
+# OPTIONAL: pyannote.audio speaker diarization / voice recognition layer
+# (the edupulse.speaker skeleton + test/test_speaker.py)
+# Requires a Hugging Face token with accepted model licenses.
+# pip install pyannote.audio
+# (also pulls torch; use CPU or CUDA as appropriate for your machine)
+# This is deliberately *not* in the base install — speaker features are
+# additive for airtime / distributed leadership analysis on top of the
+# core VAD + heavy-transcription contract.
