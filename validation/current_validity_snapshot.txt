@@ -1,0 +1,25 @@
+CURRENT ESTIMATED VALIDITY SNAPSHOT (auto-only proxy, no human coding)
+Date: 2026-06-07 20:47:39.280360
+
+Full day (retagged): 151 tx
+Category breakdown:
+auto_category
+Other / Unclear                                                     105
+Noise / Squelch / Hallucination                                      19
+Logistics / Movement / Hallway                                       17
+Testing (radio checks, mic checks, system tests, counting, etc.)      5
+Request for Information                                               2
+Request for Backup / Admin Support                                    1
+Discipline (Student Conflict, Defiance, etc.)                         1
+Maintenance / Facilities                                              1
+
+% Noise-ish: 12.6%
+% Other/Unclear: 69.5%
+
+Usable yield at different conf thresholds (Ch. 12):
+  >= 0.4: p=0.166 (CI (np.float64(0.106), np.float64(0.225))) n=151
+  >= 0.55: p=0.079 (CI (np.float64(0.036), np.float64(0.123))) n=151
+  >= 0.7: p=0.007 (CI (0, np.float64(0.02))) n=151
+  >= 0.85: p=0.000 (CI (0, np.float64(0.0))) n=151
+
+See the printed output above for sensitivity tables and full interpretation.
