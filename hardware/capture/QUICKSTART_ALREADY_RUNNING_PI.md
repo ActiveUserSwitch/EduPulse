@@ -106,22 +106,20 @@ mkdir -p ~/edupulse/test_recordings
 
 ### Getting the scripts onto the Pi (Important!)
 
-The scripts (`test_px650.py`, `record_session.py`, `check_pi_environment.py`, etc.) currently only exist in my local workspace. You need to copy them over.
-
-**Easiest method from your main machine (where the repo lives):**
+The scripts live in this git repository. On the Pi (after cloning or when the repo is at `~/edupulse`):
 
 ```bash
-# From your main Linux machine, while in the EduPulse repo root
-scp hardware/capture/*.py hardware/capture/*.sh joseph@raspberrypi:~/edupulse/hardware/capture/
+cd ~/edupulse
+git pull   # or git fetch && git checkout main
 ```
 
-Or using rsync (better if you iterate):
+Or from your laptop (while in the EduPulse clone):
 
 ```bash
 rsync -av hardware/capture/ joseph@raspberrypi:~/edupulse/hardware/capture/
 ```
 
-After copying, on the Pi you can run:
+After the files are present, on the Pi:
 
 ```bash
 python hardware/capture/record_session.py --data-dir ~/edupulse/test_recordings --duration 30
