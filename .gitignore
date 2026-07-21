@@ -1,5 +1,12 @@
 # EduPulse .gitignore
 
+# Separate Grok build projects (own git repos)
+ClipFinder/
+StockExplorer/
+
+# Copyrighted textbooks / large local libraries (not project source)
+Fundamentals of Statistical Reasoning in Education/
+
 # Raw audio recordings (critical - these can be large and contain sensitive data)
 *.wav
 *.flac
@@ -39,6 +46,11 @@ ENV/
 env/
 edupulse-env/
 
+# Hugging Face tokens (never commit these!)
+HuggingFaceToken.txt
+hf_token.txt
+token.txt
+
 # IDE / Editor
 .idea/
 .vscode/
@@ -73,3 +85,7 @@ secrets/
 # Data that should not be committed
 data/raw/
 data/transcripts/
+
+# Live fingerprint files (contain real staff names and radio vocabulary - keep local only)
+hardware/capture/staff_names.txt
+hardware/capture/common_words.txt

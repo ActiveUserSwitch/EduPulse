@@ -1,0 +1,13 @@
+cd ~/Documents/GrokBuild
+source ~/edupulse-env/bin/activate
+python hardware/capture/record_with_transcribe.py \
+  --data-dir ~/edupulse/captures \
+  --session "last-day-2" \
+  --skip-calibration \
+  --model tiny \
+  --speech-threshold -32 \
+  --silence-timeout 1.0 \
+  --tail-padding-sec 0.5 \
+  --pre-roll-sec 0.3 \
+  --known-staff-file hardware/capture/staff_names.txt \
+  --common-words-file hardware/capture/common_words.txt
