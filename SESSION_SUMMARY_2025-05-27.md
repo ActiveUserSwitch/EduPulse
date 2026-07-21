@@ -80,3 +80,7 @@ Then follow the Day 1 checklist once the sound card arrives.
 ---
 
 **Session end.** Everything is saved and organized. Ready to continue whenever you're back.
+
+---
+
+**Later note (continuation on laptop):** The project was initialized as a git repo and pushed to https://github.com/ActiveUserSwitch/EduPulse shortly after this session. The capture tooling + docs were committed. When resuming on a laptop (this clone), the main `record_session.py` was brought in sync with the documented `--preview` + `--label` behavior described above (it was described as "added" but the committed implementation lagged). A missing wiring guide (`hardware/wiring/Cobra_PX650_UCA222.md`) was also added to close references in the checklist and this summary. See the updated root README.md and git log for subsequent work.

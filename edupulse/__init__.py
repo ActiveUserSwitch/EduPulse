@@ -1,4 +1,3 @@
-***EDUPULSE/__INIT__.PY FULL CONTENT FROM PREVIOUS CAT***
 """EduPulse package.
 
 Core: VAD + heavy-model (large-v3) transcription of school radio PTT transmissions.
