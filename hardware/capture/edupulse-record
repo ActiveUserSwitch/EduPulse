@@ -3,7 +3,8 @@
 EduPulse quick launcher for recording.
 
 This is a convenience wrapper that sets sensible defaults for the current
-environment (Pi 4 on SD card, Option A testing, test_recordings folder).
+environment (short sessions / bring-up). For all-day data collection use
+`record_with_transcribe.py` instead (per-transmission files + metadata).
 
 Usage examples:
     ./edupulse-record                  # 60s recording with default settings

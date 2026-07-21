@@ -1,0 +1,23 @@
+# Template for common_words.txt
+# One term or short phrase per line.
+# Copy this file, add real terms heard on the air (especially exam logistics, call signs, procedures),
+# and keep the live version (common_words.txt) current.
+
+chromebook
+retake
+monitoring
+test monitoring
+500
+bio
+exam
+finals
+headed to
+returning
+distributing
+10-4
+go for me
+thank you
+roger
+media center
+bathroom
+bio retake
