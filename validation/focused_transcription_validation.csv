@@ -1,0 +1,49 @@
+transmission_id,wav_path,human_vad_judgment,human_transcript,large3_transcript,auto_whisper_conf,auto_is_noise
+tx_2026-06-05_08-21-11_1.9s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_08-21-11_1.9s.wav,speech,Trailing end of a transmission the sound 'N' heard followed by buzzing static.,Thank you. Thank you.,0.2765,False
+tx_2026-06-05_14-19-00_2.6s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_14-19-00_2.6s.wav,speech,This is Mr. Atkinson,This is Ms. Atkinson.,0.3786,False
+tx_2026-06-05_15-12-34_6.0s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_15-12-34_6.0s.wav,speech,"10-4, I'm on my way out there right now. Okie doke.","10-4, I'm on my way out there right now. Okie doke.",0.5101,False
+tx_2026-06-05_14-19-14_2.3s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_14-19-14_2.3s.wav,speech,Thank you.,Thank you.,0.5967,False
+tx_2026-06-05_09-02-16_4.2s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_09-02-16_4.2s.wav,speech,We have Michael here. Would you like Ms. Goble to bring him down?,We have Michael here. Would you like Ms. Goble to bring him down?,0.578,False
+tx_2026-06-05_10-45-20_3.2s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_10-45-20_3.2s.wav,speech,Mr. Moore to uh Dr. Strickland,Just some more to Dr. Strickland.,0.9071,True
+tx_2026-06-05_08-26-51_3.3s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_08-26-51_3.3s.wav,speech,Anyone at PE.,Anyone at PE.,0.4099,False
+tx_2026-06-05_10-29-12_1.9s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_10-29-12_1.9s.wav,no_speech,Indistinct noise,Thank you for watching.,0.3301,True
+tx_2026-06-05_14-18-28_2.4s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_14-18-28_2.4s.wav,speech,"Bye, hot sauce.","Bye, hot sauce.",0.3894,False
+tx_2026-06-05_10-37-48_2.1s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_10-37-48_2.1s.wav,no_speech,Uninteligible,I'll see you in the gym.,0.3955,False
+tx_2026-06-05_12-58-47_3.1s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_12-58-47_3.1s.wav,speech,Marvel or Hatfield?,Marvel or Hatfield?,0.4926,False
+tx_2026-06-05_09-50-48_2.4s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_09-50-48_2.4s.wav,no_speech,Unintelligible,Thank you for watching.,0.4306,False
+tx_2026-06-05_08-21-07_2.4s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_08-21-07_2.4s.wav,speech,Ms. Goldsch.,Ms. Goldsch.,0.2968,False
+tx_2026-06-05_10-01-02_4.4s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_10-01-02_4.4s.wav,speech,"She had Dakota, but she got in touch with Ms. Davidson.","She had Dakota, but she got in touch with Ms. Davidson.",0.3448,False
+tx_2026-06-05_15-12-51_4.2s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_15-12-51_4.2s.wav,speech,Ms. Gordon has two students in the classroom.,Ms. Gordon has two students in the classroom.,0.5753,False
+tx_2026-06-05_10-26-44_2.6s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_10-26-44_2.6s.wav,speech,Mr. Mobley.,Mr. Mobley.,0.4394,False
+tx_2026-06-05_08-18-42_3.8s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_08-18-42_3.8s.wav,speech,Media center door is still locked.,Media center door is still locked.,0.4146,False
+tx_2026-06-05_10-24-31_3.1s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_10-24-31_3.1s.wav,speech,"Thats a 10-4, yes they are","But at the 10-4, yes they are.",0.5575,False
+tx_2026-06-05_09-55-11_2.4s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_09-55-11_2.4s.wav,speech,Ms. Goltsch,Minniskolch.,0.8847,True
+tx_2026-06-05_08-10-30_8.3s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_08-10-30_8.3s.wav,speech,Is there anyone that has the keys that can help unlock the buildings so students can get to their teacher's classes?,Is there anyone that has the keys that can help unlock the buildings so students can get to their teacher's classes?,0.7579,False
+tx_2026-06-05_08-08-04_2.8s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_08-08-04_2.8s.wav,speech,Dr. Strickland.,Dr. Strickland.,0.6099,False
+tx_2026-06-05_12-59-36_4.5s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_12-59-36_4.5s.wav,speech,Dane's ride is here to be picked up.,Dane's right is here to be picked up.,0.4901,False
+tx_2026-06-05_10-25-20_2.4s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_10-25-20_2.4s.wav,speech,You're welcome.,You're welcome.,0.5996,False
+tx_2026-06-05_14-18-03_2.6s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_14-18-03_2.6s.wav,speech,Henery Sherrill,"Hey, I'm Lee Sherrill.",0.2902,False
+tx_2026-06-05_10-45-38_3.2s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_10-45-38_3.2s.wav,speech,10-4.,10-4.,0.4934,False
+tx_2026-06-05_12-51-48_2.4s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_12-51-48_2.4s.wav,speech,Ms. Secker,See you in a sec-er.,0.5066,False
+tx_2026-06-05_09-59-54_5.6s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_09-59-54_5.6s.wav,speech,"I'm just sending Dakota up for Keener, but I got in touch with Davison. Thank you.","I'm just sending Dakota up for Keener, but I got in touch with Davison. Thank you.",0.5603,False
+tx_2026-06-05_09-59-40_2.4s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_09-59-40_2.4s.wav,speech,Go for Simmeth,Go for seven.,0.431,False
+tx_2026-06-05_08-19-15_3.8s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_08-19-15_3.8s.wav,speech,"All right, thank you. I'll be right there.","All right, thank you. I'll be right there.",0.6941,False
+tx_2026-06-05_08-20-06_2.4s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_08-20-06_2.4s.wav,speech,Nevermind.,Nevermind.,0.3148,False
+tx_2026-06-05_10-00-22_3.3s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_10-00-22_3.3s.wav,speech,"I'm sorry, could you repeat that?","I'm sorry, could you repeat that?",0.6776,True
+tx_2026-06-05_10-51-12_3.1s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_10-51-12_3.1s.wav,speech,I have Gina ready for pick-up.,I have Gina ready for pick-up.,0.5735,False
+tx_2026-06-05_10-39-24_4.2s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_10-39-24_4.2s.wav,speech,"What do you need from the Media Center, Mr. Moore?","What do you need from the Media Center, Mr. Moore?",0.5743,False
+tx_2026-06-05_10-49-22_2.6s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_10-49-22_2.6s.wav,speech,Ms. Davison?,Ms. Davison?,0.3834,False
+tx_2026-06-05_10-39-35_2.7s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_10-39-35_2.7s.wav,speech,I'll let you know.,I'll let you know.,0.3463,False
+tx_2026-06-05_08-07-05_1.9s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_08-07-05_1.9s.wav,no_speech,Indestinct noise,Subtitles by the Amara.org community,0.5889,True
+tx_2026-06-05_12-58-56_5.4s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_12-58-56_5.4s.wav,speech,Marvel is up front with a student. He's headed back that way with some uniforms.,Marvel is up front with a student. He's headed back that way with some uniforms.,0.6909000000000001,False
+tx_2026-06-05_12-54-08_2.4s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_12-54-08_2.4s.wav,speech,-,10-4.,0.3081,False
+tx_2026-06-05_14-11-19_1.9s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_14-11-19_1.9s.wav,no_speech,"No words, just a click sound.",Thanks for watching!,0.0,True
+tx_2026-06-05_08-27-24_7.7s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_08-27-24_7.7s.wav,speech,"Yes, guys are here to get the open gates from Rocky, but they're not sure which ones to get.","Yes, guys are here to get the open gates from Rocky, but they're not sure which ones to get.",0.7694000000000001,False
+tx_2026-06-05_08-33-34_3.0s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_08-33-34_3.0s.wav,speech,"Okay, he's headed that way.","Okay, he's headed that way.",0.6666000000000001,False
+tx_2026-06-05_08-21-17_2.1s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_08-21-17_2.1s.wav,speech,Thank you.,Thank you.,0.5589000000000001,False
+tx_2026-06-05_15-04-46_3.5s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_15-04-46_3.5s.wav,speech,We're talking to Mr. Boyes right now.,We're talking to some boys right now.,0.4827,False
+tx_2026-06-05_10-29-25_3.1s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_10-29-25_3.1s.wav,speech,For A student,Thank you. Thank you. Thank you. Thank you. Thank you. Thank you. Thank you. Thank you. Thank you.,0.4107,False
+tx_2026-06-05_08-10-14_1.9s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_08-10-14_1.9s.wav,no_speech,Indistinct noise,Subtitles by the Amara.org community,0.5842,True
+tx_2026-06-05_12-58-30_2.2s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_12-58-30_2.2s.wav,speech,Marvel.,Marvel.,0.3399,False
+tx_2026-06-05_10-22-47_2.3s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_10-22-47_2.3s.wav,speech,10-4.,10-4.,0.3131,False
+tx_2026-06-05_10-39-39_3.2s.wav,/home/joseph/edupulse/captures/2026-06-05_last-day-2/tx_2026-06-05_10-39-39_3.2s.wav,speech,What's that for? I don't know.,What's that for? I don't know.,0.3602,False
