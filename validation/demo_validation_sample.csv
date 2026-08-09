@@ -1,0 +1,4 @@
+transmission_id,wav_path,audio_file,start_iso,duration_sec,transcription,whisper_conf,category,cat_conf,incident_id,students,roles,is_noise,human_category,human_incident_id,human_students,human_roles,notes
+tx_demo_001_1.2s.wav,/path/to/demo/tx_demo_001_1.2s.wav,tx_demo_001_1.2s.wav,2026-01-01T12:00:00,1.2,"Copy, thank you.",0.85,Request for Information,0.4,INC-001,,,False,Request for Information,INC-001,,,Synthetic demo — no real persons
+tx_demo_002_2.0s.wav,/path/to/demo/tx_demo_002_2.0s.wav,tx_demo_002_2.0s.wav,2026-01-01T12:01:00,2.0,"Ms. Example to the media center.",0.72,Logistics / Movement / Hallway,0.5,INC-002,,Ms. Example,False,Logistics / Movement / Hallway,INC-002,,Ms. Example,Synthetic demo staff title only
+tx_demo_003_0.8s.wav,/path/to/demo/tx_demo_003_0.8s.wav,tx_demo_003_0.8s.wav,2026-01-01T12:02:00,0.8,Thanks for watching!,0.2,Other / Unclear,0.1,, , ,True,Other / Unclear,,,Synthetic hallucination example

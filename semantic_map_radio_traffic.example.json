@@ -1,0 +1,14 @@
+{
+  "nodes": [
+    {"term": "thank you", "count": 3, "critical_count": 0},
+    {"term": "media center", "count": 2, "critical_count": 0},
+    {"term": "10-4", "count": 2, "critical_count": 0}
+  ],
+  "edges": [
+    {"a": "thank you", "b": "10-4", "count": 1, "critical_count": 0}
+  ],
+  "meta": {
+    "note": "EXAMPLE ONLY — synthetic structure. Real maps are gitignored (may include staff names from live traffic).",
+    "total_transcripts_processed": 0
+  }
+}

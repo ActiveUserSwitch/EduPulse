@@ -1,23 +1,103 @@
 # EduPulse .gitignore
+# Goal: never commit radio audio, live fingerprints, tokens, or local research datasets
+# that may contain student/staff PII. Templates (*.example.*) and synthetic demos are OK.
 
-# (Historical) sibling apps used to live next to this tree under GrokBuild/;
-# they are now separate directories outside this repo. Keep patterns harmless.
+# (Historical) sibling apps under old layouts
 ClipFinder/
 StockExplorer/
 
-# Copyrighted textbooks / large local libraries (not project source)
+# Copyrighted textbooks / large local libraries
 Fundamentals of Statistical Reasoning in Education/
 
-# Raw audio recordings (critical - these can be large and contain sensitive data)
+# ---------------------------------------------------------------------------
+# Captures & audio (sensitive + large)
+# ---------------------------------------------------------------------------
 *.wav
 *.flac
 *.mp3
 *.ogg
+*.m4a
 test_recordings/
 raw/
 audio/
+captures/
+**/captures/
+**/tx_*.json
+**/session_manifest*.jsonl
+**/session_summary*.json
+*.sidecar.json
 
-# Python
+# Local data roots (if someone clones into them or adds by mistake)
+edupulse/
+data/raw/
+data/transcripts/
+data/private/
+data/local/
+
+# ---------------------------------------------------------------------------
+# Live fingerprints (real staff names / channel language — keep local only)
+# Templates: hardware/capture/*.example.txt  (OK to commit)
+# ---------------------------------------------------------------------------
+hardware/capture/staff_names.txt
+hardware/capture/common_words.txt
+**/staff_names.txt
+**/common_words.txt
+!hardware/capture/staff_names.example.txt
+!hardware/capture/common_words.example.txt
+
+# ---------------------------------------------------------------------------
+# Secrets / tokens
+# ---------------------------------------------------------------------------
+HuggingFaceToken.txt
+**/HuggingFaceToken.txt
+hf_token.txt
+token.txt
+*.pem
+*.key
+.id_rsa
+.env
+.env.*
+!.env.example
+secrets/
+.secrets/
+credentials/
+**/credentials.json
+
+# ---------------------------------------------------------------------------
+# Validation / research datasets with possible PII (local only)
+# Commit only: validation/*.py, *.md, and clearly synthetic demos
+# ---------------------------------------------------------------------------
+validation/*_private*
+validation/private/
+validation/aligned_validation_data.csv
+validation/aligned_validation_data_demo.csv
+validation/human_consensus.csv
+validation/validation_sample_*.csv
+validation/focused_transcription_validation.csv
+validation/graduation_vad_transcription_focused.csv
+validation/hand_coding_log.txt
+validation/current_validity_snapshot.txt
+# Keep explicit allow for synthetic demo:
+!validation/demo_validation_sample.csv
+!validation/README.md
+
+# Semantic maps built from real traffic (may include staff names)
+semantic_map_radio_traffic.json
+*_semantic_map*.json
+!*_semantic_map*.example.json
+!semantic_map_radio_traffic.example.json
+
+# Generated feasibility / local reports (may name staff)
+speaker_feasibility_report.md
+*_feasibility_report.md
+
+# Probe / junk
+.edupulse_sync_probe.txt
+*.probe.txt
+
+# ---------------------------------------------------------------------------
+# Python / venv / tooling
+# ---------------------------------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
@@ -39,20 +119,13 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
-# Virtual environments
 .venv/
 venv/
 ENV/
 env/
 edupulse-env/
 
-# Hugging Face tokens (never commit these!)
-HuggingFaceToken.txt
-hf_token.txt
-token.txt
-
-# IDE / Editor
+# IDE / OS
 .idea/
 .vscode/
 *.swp
@@ -60,33 +133,22 @@ token.txt
 *~
 .project
 .pydevproject
-
-# Jupyter
 .ipynb_checkpoints/
-
-# OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Logs and temporary files
+# Logs and temp
 *.log
 *.tmp
 *.cache
+logs/
 
-# Large model files (future Whisper models, etc.)
+# Large model files
 *.bin
 *.pt
+*.onnx
 models/
-
-# Environment / secrets
-.env
-.env.local
-secrets/
-
-# Data that should not be committed
-data/raw/
-data/transcripts/
-
-# Live fingerprint files (contain real staff names and radio vocabulary - keep local only)
-hardware/capture/staff_names.txt
-hardware/capture/common_words.txt
+.cache/
+**/huggingface/
+**/torch/

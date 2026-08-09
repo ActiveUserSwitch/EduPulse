@@ -250,7 +250,11 @@ Windows port is **complete enough** when:
 | Portable reference dirs / HF token search | `analysis.py`, `speaker.py` | Done |
 | Device list CLI | `check_audio_environment.py`, `record_with_transcribe.py --list-devices` | Done |
 | PowerShell setup + capture launcher | `Setup-EduPulseWindows.ps1`, `edupulse-record.ps1` | Done |
-| Quickstart | `hardware/capture/WINDOWS_QUICKSTART.md` | Done |
+| Quickstart + mitigations | `hardware/capture/WINDOWS_QUICKSTART.md` | Done |
+| IT security brief | `docs/IT_SECURITY_REVIEW.md` | Done |
+| Git leak prevention | `.gitignore` + `scripts/check_git_secrets.sh` | Done |
 | Smoke on real Windows + UCA222 | (user work PC) | **Todo** |
 
-*Last updated: Windows port scaffold landed. Complete WP0/WP3 smoke on the work machine next.*
+**Give IT:** repo URL + `docs/IT_SECURITY_REVIEW.md`. Real validation CSVs stay local (gitignored).
+
+*Last updated: Windows port + IT mitigations + secret scan on push.*

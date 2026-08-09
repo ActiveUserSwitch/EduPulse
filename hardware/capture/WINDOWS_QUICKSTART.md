@@ -2,7 +2,23 @@
 
 Run capture + offline analysis on a **Windows work PC** with the same artifacts as Linux/Pi.
 
-Full design notes: [`WINDOWS_PORT_PLAN.md`](../../WINDOWS_PORT_PLAN.md) (repo root).
+Full design notes: [`WINDOWS_PORT_PLAN.md`](../../WINDOWS_PORT_PLAN.md) (repo root).  
+**IT / security brief:** [`docs/IT_SECURITY_REVIEW.md`](../../docs/IT_SECURITY_REVIEW.md)
+
+---
+
+## Mitigations (for IT — bare minimum)
+
+| Control | What we do |
+|---------|------------|
+| Principal approval | Research/ops use of **school operations radio** is leadership-approved |
+| Local processing | Capture + Whisper run **on this PC**; no cloud LLM upload in the capture path |
+| Code vs data | GitHub holds **source code** + synthetic demos only — not live radio or real fingerprints |
+| Git leak prevention | `.gitignore` + `scripts/check_git_secrets.sh` block WAVs, tokens, live `staff_names.txt`, private validation CSVs |
+| Encryption | Use **district BitLocker** if already required; we do **not** add extra vaults unless IT asks |
+| Least privilege | User-mode Python scripts; no Windows service / no SYSTEM install in-repo |
+
+Sensitive live data path: `%USERPROFILE%\edupulse\captures\` (local only; do not put under consumer cloud sync if policy forbids).
 
 ---
 
