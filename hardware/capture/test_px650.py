@@ -28,6 +28,7 @@ DEFAULT_DURATION = 30
 DEVICE = None  # Will try to auto-detect UCA222
 # ===========================================================
 
+
 def find_uca222_device():
     """Try to find the UCA222 (or compatible USB audio codec) in the list of devices."""
     devices = sd.query_devices()

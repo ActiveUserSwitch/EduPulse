@@ -77,12 +77,18 @@ card 1: UCA222 [BEHRINGER UCA222], device 0: USB Audio [USB Audio]
 
 | Symptom                    | Likely cause                          | Fix |
 |----------------------------|---------------------------------------|-----|
-| No UCA222 in arecord -l    | Wrong USB port / cable / power        | Try blue port, different cable, powered hub, reboot |
-| No audio in either channel | Cable not seated, radio off or volume 0, wrong jack on radio | Reseat 2.5mm, power on PX650, raise volume |
-| Only one channel works     | Normal for this radio + cable         | Use the louder channel in analysis later |
-| Crackling / USB dropouts   | Insufficient USB power or bandwidth   | Powered hub, shorter cable, USB 3 port |
-| Very low levels            | Radio volume too low or UCA222 gain too low | Raise PX650 knob first |
-| Heavy clipping             | Radio output hot for the gain setting | Lower PX650 volume significantly |
+| No UCA222 in arecord -l    | Wrong USB port / cable / power        | Try blue
+port, different cable, powered hub, reboot |
+| No audio in either channel | Cable not seated, radio off or volume 0, wrong jack
+on radio | Reseat 2.5mm, power on PX650, raise volume |
+| Only one channel works     | Normal for this radio + cable         | Use the
+louder channel in analysis later |
+| Crackling / USB dropouts   | Insufficient USB power or bandwidth   | Powered
+hub, shorter cable, USB 3 port |
+| Very low levels            | Radio volume too low or UCA222 gain too low | Raise
+PX650 knob first |
+| Heavy clipping             | Radio output hot for the gain setting | Lower PX650
+volume significantly |
 
 ## Notes for Later
 

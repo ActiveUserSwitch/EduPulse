@@ -1,6 +1,7 @@
 # EduPulse .gitignore
 
-# Separate Grok build projects (own git repos)
+# (Historical) sibling apps used to live next to this tree under GrokBuild/;
+# they are now separate directories outside this repo. Keep patterns harmless.
 ClipFinder/
 StockExplorer/
 

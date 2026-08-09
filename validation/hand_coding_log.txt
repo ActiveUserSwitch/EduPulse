@@ -1,0 +1,310 @@
+
+=== tx_2026-06-05_14-11-19_1.9s.wav ===
+Large-v3: Thanks for watching!
+Human correction: No words, just a click sound.
+VAD: no_speech
+Notes: Click sound only (squelch/noise). Large-v3 hallucinated sign-off.
+
+=== tx_2026-06-05_08-21-11_1.9s.wav ===
+Large-v3: Thank you. Thank you.
+Human correction: Trailing end of a transmission the sound 'N' heard followed by buzzing static.
+VAD: speech (partial 'N' + static)
+Notes: Trailing end of transmission: sound 'N' + buzzing static. Large-v3 output 'Thank you. Thank you.' is incorrect (hallucinated).
+
+=== tx_2026-06-05_14-18-03_2.6s.wav ===
+Large-v3: Hey, I'm Lee Sherrill.
+Human correction: Henery Sherrill
+VAD: speech
+Notes: Large-v3: Hey, I'm Lee Sherrill. Human correction: Henery Sherrill.
+
+=== tx_2026-06-05_08-21-07_2.4s.wav ===
+Large-v3: Ms. Goldsch.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: Ms. Goldsch. Human: correct (' )
+
+=== tx_2026-06-05_12-54-08_2.4s.wav ===
+Large-v3: 10-4.
+Human correction: -
+VAD: speech
+Notes: Large-v3: 10-4. Human correction: -
+
+=== CORRECTION for tx_2026-06-05_10-22-47_2.3s.wav ===
+User clarified: the previous input '-' was meant to be ' (correct)
+Large-v3: 10-4.
+Human: correct (' )
+VAD: speech
+Notes: Large-v3: 10-4. Human: correct (' ) [typo correction]
+
+=== tx_2026-06-05_08-20-06_2.4s.wav ===
+Large-v3: Nevermind.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: Nevermind. Human: correct (' )
+
+=== tx_2026-06-05_10-29-12_1.9s.wav ===
+Large-v3: Thank you for watching.
+Human correction: Indistinct noise
+VAD: no_speech
+Notes: Large-v3: Thank you for watching. Human correction: Indistinct noise
+
+=== tx_2026-06-05_12-58-30_2.2s.wav ===
+Large-v3: Marvel.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: Marvel. Human: correct (' )
+
+=== tx_2026-06-05_10-01-02_4.4s.wav ===
+Large-v3: She had Dakota, but she got in touch with Ms. Davidson.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: She had Dakota, but she got in touch with Ms. Davidson.. Human: correct (' )
+
+=== tx_2026-06-05_10-39-35_2.7s.wav ===
+Large-v3: I'll let you know.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: I'll let you know.. Human: correct (' )
+
+=== tx_2026-06-05_10-39-39_3.2s.wav ===
+Large-v3: What's that for? I don't know.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: What's that for? I don't know.. Human: correct (' )
+
+=== tx_2026-06-05_14-19-00_2.6s.wav ===
+Large-v3: This is Ms. Atkinson.
+Human correction: This is Mr. Atkinson
+VAD: speech
+Notes: Large-v3: This is Ms. Atkinson. Human correction: This is Mr. Atkinson
+
+=== tx_2026-06-05_10-49-22_2.6s.wav ===
+Large-v3: Ms. Davison?
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: Ms. Davison?. Human: correct (' )
+
+=== tx_2026-06-05_14-18-28_2.4s.wav ===
+Large-v3: Bye, hot sauce.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: Bye, hot sauce.. Human: correct (' )
+
+=== tx_2026-06-05_10-37-48_2.1s.wav ===
+Large-v3: I'll see you in the gym.
+Human correction: Uninteligible
+VAD: no_speech
+Notes: Large-v3: I'll see you in the gym. Human correction: Uninteligible
+
+=== tx_2026-06-05_08-26-51_3.3s.wav ===
+Large-v3: Anyone at PE.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: Anyone at PE.. Human: correct (' )
+
+=== tx_2026-06-05_10-29-25_3.1s.wav ===
+Large-v3: Thank you. Thank you. Thank you. Thank you. Thank you. Thank you. Thank you. Thank you. Thank you.
+Human correction: For A student
+VAD: speech
+Notes: Large-v3: Thank you. Thank you. Thank you. Thank you. Thank you. Thank you. Thank you. Thank you. Thank you. Human correction: For A student
+
+=== tx_2026-06-05_08-18-42_3.8s.wav ===
+Large-v3: Media center door is still locked.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: Media center door is still locked.. Human: correct (' )
+
+=== tx_2026-06-05_09-50-48_2.4s.wav ===
+Large-v3: Thank you for watching.
+Human correction: Unintelligible
+VAD: no_speech
+Notes: Large-v3: Thank you for watching. Human correction: Unintelligible
+
+=== tx_2026-06-05_09-59-40_2.4s.wav ===
+Large-v3: Go for seven.
+Human correction: Go for Simmeth
+VAD: speech
+Notes: Large-v3: Go for seven. Human correction: Go for Simmeth
+
+=== tx_2026-06-05_10-26-44_2.6s.wav ===
+Large-v3: Mr. Mobley.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: Mr. Mobley.. Human: correct (' )
+
+=== tx_2026-06-05_15-04-46_3.5s.wav ===
+Large-v3: We're talking to some boys right now.
+Human correction: We're talking to Mr. Boyes right now.
+VAD: speech
+Notes: Large-v3: We're talking to some boys right now. Human correction: We're talking to Mr. Boyes right now.
+
+=== tx_2026-06-05_12-59-36_4.5s.wav ===
+Large-v3: Dane's right is here to be picked up.
+Human correction: Dane's ride is here to be picked up.
+VAD: speech
+Notes: Large-v3: Dane's right is here to be picked up. Human correction: Dane's ride is here to be picked up.
+
+=== tx_2026-06-05_12-58-47_3.1s.wav ===
+Large-v3: Marvel or Hatfield?
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: Marvel or Hatfield?. Human: correct (' )
+
+=== tx_2026-06-05_10-45-38_3.2s.wav ===
+Large-v3: 10-4.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: 10-4.. Human: correct (' )
+
+=== tx_2026-06-05_12-51-48_2.4s.wav ===
+Large-v3: See you in a sec-er.
+Human correction: Ms. Secker
+VAD: speech
+Notes: Large-v3: See you in a sec-er. Human correction: Ms. Secker
+
+=== tx_2026-06-05_15-12-34_6.0s.wav ===
+Large-v3: 10-4, I'm on my way out there right now. Okie doke.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: 10-4, I'm on my way out there right now. Okie doke. Human: correct (' )
+
+
+=== tx_2026-06-05_14-19-14_2.3s.wav ===
+Large-v3: Thank you.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: Thank you. Human: correct (' )
+
+
+=== tx_2026-06-05_09-02-16_4.2s.wav ===
+Large-v3: We have Michael here. Would you like Ms. Goble to bring him down?
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: We have Michael here. Would you like Ms. Goble to bring him down? Human: correct (' )
+
+
+=== tx_2026-06-05_10-45-20_3.2s.wav ===
+Large-v3: Just some more to Dr. Strickland.
+Human correction: Mr. Moore to uh Dr. Strickland
+VAD: speech
+Notes: Large-v3: Just some more to Dr. Strickland. Human correction: Mr. Moore to uh Dr. Strickland
+
+
+=== tx_2026-06-05_15-12-51_4.2s.wav ===
+Large-v3: Ms. Gordon has two students in the classroom.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: Ms. Gordon has two students in the classroom. Human: correct (' )
+
+
+=== tx_2026-06-05_10-24-31_3.1s.wav ===
+Large-v3: But at the 10-4, yes they are.
+Human correction: Thats a 10-4, yes they are
+VAD: speech
+Notes: Large-v3: But at the 10-4, yes they are. Human correction: Thats a 10-4, yes they are
+
+
+=== tx_2026-06-05_09-55-11_2.4s.wav ===
+Large-v3: Minniskolch.
+Human correction: Ms. Goltsch
+VAD: speech
+Notes: Large-v3: Minniskolch. Human correction: Ms. Goltsch
+
+
+=== tx_2026-06-05_08-10-30_8.3s.wav ===
+Large-v3: Is there anyone that has the keys that can help unlock the buildings so students can get to their teacher's classes?
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: Is there anyone that has the keys that can help unlock the buildings so students can get to their teacher's classes? Human: correct (' )
+
+
+=== tx_2026-06-05_08-08-04_2.8s.wav ===
+Large-v3: Dr. Strickland.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: Dr. Strickland. Human: correct (' )
+
+
+=== tx_2026-06-05_10-25-20_2.4s.wav ===
+Large-v3: You're welcome.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: You're welcome. Human: correct (' )
+
+
+=== tx_2026-06-05_09-59-54_5.6s.wav ===
+Large-v3: I'm just sending Dakota up for Keener, but I got in touch with Davison. Thank you.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: I'm just sending Dakota up for Keener, but I got in touch with Davison. Thank you. Human: correct (' )
+
+
+=== tx_2026-06-05_08-19-15_3.8s.wav ===
+Large-v3: All right, thank you. I'll be right there.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: All right, thank you. I'll be right there. Human: correct (' )
+
+
+=== tx_2026-06-05_10-00-22_3.3s.wav ===
+Large-v3: I'm sorry, could you repeat that?
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: I'm sorry, could you repeat that? Human: correct (' )
+
+
+=== tx_2026-06-05_10-51-12_3.1s.wav ===
+Large-v3: I have Gina ready for pick-up.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: I have Gina ready for pick-up. Human: correct (' )
+
+
+=== tx_2026-06-05_10-39-24_4.2s.wav ===
+Large-v3: What do you need from the Media Center, Mr. Moore?
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: What do you need from the Media Center, Mr. Moore? Human: correct (' )
+
+
+=== tx_2026-06-05_08-07-05_1.9s.wav ===
+Large-v3: Subtitles by the Amara.org community
+Human correction: Indestinct noise
+VAD: no_speech
+Notes: Large-v3: Subtitles by the Amara.org community Human correction: Indestinct noise
+
+
+=== tx_2026-06-05_12-58-56_5.4s.wav ===
+Large-v3: Marvel is up front with a student. He's headed back that way with some uniforms.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: Marvel is up front with a student. He's headed back that way with some uniforms. Human: correct (' )
+
+
+=== tx_2026-06-05_08-27-24_7.7s.wav ===
+Large-v3: Yes, guys are here to get the open gates from Rocky, but they're not sure which ones to get.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: Yes, guys are here to get the open gates from Rocky, but they're not sure which ones to get. Human: correct (' )
+
+
+=== tx_2026-06-05_08-33-34_3.0s.wav ===
+Large-v3: Okay, he's headed that way.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: Okay, he's headed that way. Human: correct (' )
+
+
+=== tx_2026-06-05_08-21-17_2.1s.wav ===
+Large-v3: Thank you.
+Human correction: ' (correct)
+VAD: speech
+Notes: Large-v3: Thank you. Human: correct (' )
+
+
+=== tx_2026-06-05_08-10-14_1.9s.wav ===
+Large-v3: Subtitles by the Amara.org community
+Human correction: Indistinct noise
+VAD: no_speech
+Notes: Large-v3: Subtitles by the Amara.org community Human correction: Indistinct noise
+

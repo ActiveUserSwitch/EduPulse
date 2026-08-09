@@ -5,7 +5,7 @@ raw per-transmission audio + metadata from the final days
 (plus earlier tests). The 3-month break is for turning
 that raw material into high-quality, validated output.
 
-Use `retag_session.py` + `analyze_manifest.py` + 
+Use `retag_session.py` + `analyze_manifest.py` +
 `test/test_whisper.py` (with the fingerprint files) as the
 primary workflow.
 
@@ -236,3 +236,4 @@ Goal: Build a domain-specific PLM of "normal" radio traffic (procedural, low-urg
 This directly evolves the current post-accumulation analysis (semantic map, critical baseline using the fight report's pyannote + lexical proxies) into a more principled information-theoretic framework while staying true to the project's narrowed focus (VAD + heavy transcription core; everything else additive and scoped to hand-coded day onward for cleanliness).
 
 See also the existing "Critical / urgent transmission baseline" and "Post-accumulation analysis" sections above, and the multi-modal flow chart in the Processing Pipeline section of README.md.
+
