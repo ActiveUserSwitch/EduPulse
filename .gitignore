@@ -27,12 +27,14 @@ captures/
 **/session_summary*.json
 *.sidecar.json
 
-# Local data roots (if someone clones into them or adds by mistake)
-edupulse/
+# Local data roots (if someone clones into them or adds by mistake).
+# Live runtime data is ~/edupulse (outside this repo). Do NOT ignore "edupulse/"
+# here — that path is the Python package (edupulse/*.py) that must be tracked.
 data/raw/
 data/transcripts/
 data/private/
 data/local/
+edupulse-data/
 
 # ---------------------------------------------------------------------------
 # Live fingerprints (real staff names / channel language — keep local only)
