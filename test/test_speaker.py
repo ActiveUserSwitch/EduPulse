@@ -43,9 +43,10 @@ import os
 import sys
 from pathlib import Path
 
-# Make "import edupulse..." work when running the script directly (python test/test_speaker.py)
-# without requiring installation or PYTHONPATH hacks.
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+_repo = Path(__file__).resolve().parents[1]
+if (_repo / "edupulse" / "__init__.py").is_file() and str(_repo) not in sys.path:
+    sys.path.insert(0, str(_repo))
+
 
 # We import from the skeleton so the whole thing stays optional.
 try:
@@ -428,13 +429,11 @@ def main():
                 if tx in cache:
                     vec = cache[tx]
                     print(f"  Using pre-cached embedding from {label} day cache (no wav read needed).")
-                    break
                 # also try without .wav suffix in key
                 alt = tx.replace(".wav", "")
                 if alt in cache:
                     vec = cache[alt]
                     print(f"  Using pre-cached embedding from {label} day cache (key match).")
-                    break
 
             if vec is None:
                 # last resort: try to embed from a real wav if the user gave --wav-dir or we can guess
@@ -447,7 +446,6 @@ def main():
                     if os.path.isfile(gp):
                         print(f"  Computing fresh embedding from {gp}")
                         vec = db.embedder.embed(gp)
-                        break
 
             if vec is None:
                 print("  ERROR: could not obtain an embedding for that tx (neither in caches nor on disk).")

@@ -24,13 +24,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Repo root on sys.path for `edupulse` package
-_here = Path(__file__).resolve()
-for parent in [_here.parent, *_here.parents]:
-    if (parent / "edupulse" / "__init__.py").exists():
-        if str(parent) not in sys.path:
-            sys.path.insert(0, str(parent))
-        break
+_repo = Path(__file__).resolve().parents[2]
+if (_repo / "edupulse" / "__init__.py").is_file() and str(_repo) not in sys.path:
+    sys.path.insert(0, str(_repo))
 
 from edupulse.platform_util import (  # noqa: E402
     default_captures_dir,

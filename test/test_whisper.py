@@ -51,20 +51,9 @@ import math
 import sys
 from pathlib import Path
 
-# Allow running this script directly from test/ (or any subdir) without
-# PYTHONPATH=. or pip install -e. Walk up until the dir containing edupulse/
-# package is found. Keeps usage examples in docs and --help simple.
-_here = Path(__file__).resolve()
-for _ in range(6):
-    if (_here / "edupulse" / "__init__.py").exists():
-        if str(_here) not in sys.path:
-            sys.path.insert(0, str(_here))
-        break
-    _here = _here.parent
-else:
-    _root = Path(__file__).resolve().parents[1]
-    if str(_root) not in sys.path:
-        sys.path.insert(0, str(_root))
+_repo = Path(__file__).resolve().parents[1]
+if (_repo / "edupulse" / "__init__.py").is_file() and str(_repo) not in sys.path:
+    sys.path.insert(0, str(_repo))
 
 import numpy as np
 

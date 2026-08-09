@@ -11,16 +11,16 @@ It will call update_sidecar_with_pyannote for every tx_*.wav that has a sidecar,
 adding acoustic_features, speaker_* (if DB matches), and speaker_segments (if --diar).
 Backups are created on first run per file.
 """
+
+import sys
+from pathlib import Path
+_repo = Path(__file__).resolve().parents[2]
+if (_repo / "edupulse" / "__init__.py").is_file() and str(_repo) not in sys.path:
+    sys.path.insert(0, str(_repo))
+
 import argparse, glob, os, sys
 from pathlib import Path
 
-# allow running from anywhere
-_here = Path(__file__).resolve()
-for _ in range(6):
-    if (_here / "edupulse" / "__init__.py").exists():
-        sys.path.insert(0, str(_here.parent.parent))
-        break
-    _here = _here.parent
 
 from edupulse.speaker import update_sidecar_with_pyannote
 

@@ -98,35 +98,24 @@ transmissions are never dropped while a previous one is being transcribed.
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+# Prefer: pip install -e .  — else add repo root for `import edupulse`
+_repo = Path(__file__).resolve().parents[2]
+if (_repo / "edupulse" / "__init__.py").is_file() and str(_repo) not in sys.path:
+    sys.path.insert(0, str(_repo))
+
+
+
 import argparse
 import json
 import math
 import queue
 import signal
-import sys
 import threading
 import time
 from datetime import datetime
-from pathlib import Path
 from typing import Any
-
-# Allow running this script directly from hardware/capture/ (or any subdir)
-# without setting PYTHONPATH or doing "pip install -e .".
-# We walk upward from the script until we find the project root that contains
-# an "edupulse/" package directory. This makes the documented commands work
-# cleanly after "cd ... && source ~/edupulse-env/bin/activate".
-_here = Path(__file__).resolve()
-for _ in range(6):
-    if (_here / "edupulse" / "__init__.py").exists():
-        if str(_here) not in sys.path:
-            sys.path.insert(0, str(_here))
-        break
-    _here = _here.parent
-else:
-    # Fallback (unusual layout)
-    _root = Path(__file__).resolve().parents[2]
-    if str(_root) not in sys.path:
-        sys.path.insert(0, str(_root))
 
 import numpy as np
 
@@ -142,84 +131,13 @@ from edupulse.analysis import (
 )
 
 # =============================================================================
-# Audio helpers (adapted from record_session.py + test_realtime_transcribe.py; host-agnostic)
+# Audio helpers (shared)
 # =============================================================================
+from edupulse.audio_io import db, downmix_to_mono, find_uca222, get_levels
+from edupulse.sidecar import build_sidecar, process_transcript
 
 SAMPLE_RATE = 16000
 CHANNELS = 2
-
-
-def find_uca222() -> int | None:
-    """Find a likely radio input device (UCA222 or compatible USB audio codec)."""
-    import sounddevice as sd
-
-    devices = sd.query_devices()
-    candidates = []
-    for i, d in enumerate(devices):
-        if d.get("max_input_channels", 0) < 1:
-            continue
-        name = d["name"].lower()
-        score = 0
-        if "uca222" in name or "behringer" in name:
-            score = 100
-        elif "pcm2902" in name:
-            score = 80
-        elif "usb audio codec" in name or "codec" in name:
-            score = 60
-        elif "usb audio" in name:
-            score = 40
-        if score > 0:
-            candidates.append((score, i, d["name"]))
-    if candidates:
-        candidates.sort(reverse=True)
-        best_score, best_idx, best_name = candidates[0]
-        print(f"Found likely radio input: [{best_idx}] {best_name}")
-        return best_idx
-    return None
-
-
-def db(x: float) -> float:
-    if x <= 1e-8:
-        return -80.0
-    return 20 * np.log10(x)
-
-
-def get_levels(audio: np.ndarray) -> dict[str, float]:
-    if audio.ndim == 1:
-        audio = audio.reshape(-1, 1)
-    rms_l = float(np.sqrt(np.mean(audio[:, 0] ** 2)))
-    rms_r = float(np.sqrt(np.mean(audio[:, 1] ** 2))) if audio.shape[1] > 1 else rms_l
-    peak_l = float(np.max(np.abs(audio[:, 0])))
-    peak_r = float(np.max(np.abs(audio[:, 1]))) if audio.shape[1] > 1 else peak_l
-    return {
-        "rms_l": rms_l,
-        "rms_r": rms_r,
-        "peak_l": peak_l,
-        "peak_r": peak_r,
-        "db_rms_l": db(rms_l),
-        "db_rms_r": db(rms_r),
-        "db_peak_l": db(peak_l),
-        "db_peak_r": db(peak_r),
-    }
-
-
-def downmix_to_mono(audio: np.ndarray) -> np.ndarray:
-    """Dominant channel (usually R on PX650 2.5mm cable) + simple peak normalization.
-    This is what we feed to Whisper for best radio results.
-    """
-    if audio.ndim == 1:
-        return audio
-    if audio.shape[1] == 1:
-        return audio[:, 0]
-
-    rms_l = np.sqrt(np.mean(audio[:, 0] ** 2))
-    rms_r = np.sqrt(np.mean(audio[:, 1] ** 2))
-    mono = audio[:, 0] if rms_l > rms_r else audio[:, 1]
-
-    peak = np.max(np.abs(mono))
-    if peak > 1e-6:
-        mono = mono / peak
-    return mono.astype(np.float32)
 
 
 # =============================================================================
@@ -730,7 +648,14 @@ def run_capture(
                             conf = math.exp(seg.avg_logprob)
                             transcription = seg.text.strip()
 
-                            if is_likely_noise(transcription, duration, conf):
+                            domain = process_transcript(
+                                transcription,
+                                duration_sec=duration,
+                                whisper_conf=conf,
+                                tracker=tracker,
+                                timestamp=wall_dt,
+                            )
+                            if domain["is_noise"]:
                                 cat_str = "Noise / Squelch / Hallucination"
                                 cat_conf = 0.95
                                 cat_result = {"category": cat_str, "confidence": cat_conf, "matched_keywords": []}
@@ -742,21 +667,17 @@ def run_capture(
                                     f"[NOISE] (conf {conf:.2f}) "
                                     f"duration {duration:.1f}s — likely static/hallucination, skipping INC linking"
                                 )
-                                category_counts[cat_str] = category_counts.get(cat_str, 0) + 1
                             else:
-                                cat_result = categorize_transmission(transcription)
-                                cat_str = cat_result["category"]
-                                cat_conf = cat_result["confidence"]
-
-                                inc_id = tracker.get_incident_id(
-                                    transcription, wall_dt, cat_str, whisper_conf=conf, cat_conf=cat_conf
-                                )
-
-                                # Re-extract for the sidecar (cheap; same rules as linking)
-                                ex = tracker._extract_names(transcription)
-                                students = ex.get("students", [])
-                                roles = ex.get("roles", [])
-
+                                cat_str = domain["category"]
+                                cat_conf = domain["cat_conf"]
+                                cat_result = {
+                                    "category": cat_str,
+                                    "confidence": cat_conf,
+                                    "matched_keywords": domain.get("matched_keywords") or [],
+                                }
+                                inc_id = domain["incident_id"]
+                                students = domain.get("students") or []
+                                roles = domain.get("roles") or []
                                 print(
                                     f"[{wall_ts} +{seg.start:5.1f}s] "
                                     f"[{inc_id}] "
@@ -764,9 +685,7 @@ def run_capture(
                                     f"[{cat_str} conf:{cat_conf:.2f}] "
                                     f"{transcription}"
                                 )
-
-                                # update counters
-                                category_counts[cat_str] = category_counts.get(cat_str, 0) + 1
+                            category_counts[cat_str] = category_counts.get(cat_str, 0) + 1
                         else:
                             print(f"[{wall_ts}] (no speech in model output)")
                     except Exception as e:
@@ -784,20 +703,24 @@ def run_capture(
 
                 # Write sidecar JSON (always, even in pure capture mode)
                 if wav_path_str:
-                    meta = {
-                        "audio_file": Path(wav_path_str).name,
-                        "start_iso": wall_dt.isoformat(),
-                        "duration_sec": round(duration, 2),
-                        "levels": seg_levels,
-                        "model": model_name if transcribe else None,
-                        "transcription": transcription,
-                        "whisper_conf": round(conf, 4) if transcribe else None,
-                        "category": cat_result["category"],
-                        "cat_conf": cat_result["confidence"],
-                        "incident_id": inc_id,
-                        "students": students,
-                        "roles": roles,
-                    }
+                    meta = build_sidecar(
+                        audio_file=Path(wav_path_str).name,
+                        start_iso=wall_dt.isoformat(),
+                        duration_sec=round(duration, 2),
+                        transcription=transcription,
+                        whisper_conf=round(conf, 4) if transcribe else None,
+                        category=cat_result["category"],
+                        cat_conf=cat_result["confidence"],
+                        matched_keywords=cat_result.get("matched_keywords") or [],
+                        incident_id=inc_id,
+                        students=students,
+                        roles=roles,
+                        is_noise=(inc_id == "NOISE"),
+                        model=model_name if transcribe else "",
+                        sample_rate=SAMPLE_RATE,
+                        channels=CHANNELS,
+                        levels=seg_levels,
+                    )
                     try:
                         with open(Path(wav_path_str).with_suffix(".json"), "w") as jf:
                             json.dump(meta, jf, indent=2)
@@ -811,12 +734,13 @@ def run_capture(
                             "start_iso": meta["start_iso"],
                             "duration_sec": meta["duration_sec"],
                             "transcription": transcription,
-                            "whisper_conf": meta["whisper_conf"],
+                            "whisper_conf": meta.get("whisper_conf"),
                             "category": meta["category"],
                             "cat_conf": meta["cat_conf"],
                             "incident_id": inc_id,
                             "students": students,
                             "roles": roles,
+                            "is_noise": meta.get("is_noise", False),
                         }
                         with open(manifest_path, "a") as mf:
                             mf.write(json.dumps(manifest_entry, ensure_ascii=False) + "\n")
@@ -975,18 +899,8 @@ def main():
         return
 
     if args.list_devices:
-        try:
-            from edupulse.platform_util import print_input_devices
-
-            print_input_devices()
-        except Exception as e:
-            # Fallback if package path not set up yet
-            try:
-                import sounddevice as sd
-
-                print(sd.query_devices())
-            except Exception as e2:
-                print(f"ERROR listing devices: {e} / {e2}")
+        from edupulse.platform_util import print_input_devices
+        print_input_devices()
         return
 
     # Parse fingerprint data (staff names + common words) for the audio "fingerprint"

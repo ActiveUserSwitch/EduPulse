@@ -17,20 +17,21 @@ Fingerprint support:
 
 This is the main lever for iteration when you only have the saved .wav + old transcripts.
 """
+
+import sys
+from pathlib import Path
+_repo = Path(__file__).resolve().parents[2]
+if (_repo / "edupulse" / "__init__.py").is_file() and str(_repo) not in sys.path:
+    sys.path.insert(0, str(_repo))
+
 import json
 import sys
 from datetime import datetime
 from pathlib import Path
 
-# Make sure we can import even if run from elsewhere
 import sys as _sys
 from pathlib import Path as _Path
 _here = _Path(__file__).resolve()
-for _ in range(5):
-    if (_here / "edupulse" / "__init__.py").exists():
-        _sys.path.insert(0, str(_here))
-        break
-    _here = _here.parent
 
 from edupulse.analysis import categorize_transmission, IncidentTracker, is_likely_noise, build_enhanced_initial_prompt
 

@@ -22,6 +22,13 @@ It will:
 This brings every day up to the current standard (heavy trans + full pyannote data + batch information scores in sidecars next to the WAVs).
 Scope note: information scores / z use only the clean 2026-06-05+ corpus as reference.
 """
+
+import sys
+from pathlib import Path
+_repo = Path(__file__).resolve().parents[2]
+if (_repo / "edupulse" / "__init__.py").is_file() and str(_repo) not in sys.path:
+    sys.path.insert(0, str(_repo))
+
 import argparse
 import glob
 import json
@@ -31,14 +38,6 @@ import sys
 import wave
 from pathlib import Path
 
-# Path setup so "import edupulse..." works when invoked as python hardware/capture/...
-_here = Path(__file__).resolve()
-for _ in range(8):
-    if (_here / "edupulse" / "__init__.py").exists():
-        if str(_here.parent.parent) not in sys.path:
-            sys.path.insert(0, str(_here.parent.parent))
-        break
-    _here = _here.parent
 
 from edupulse.analysis import (
     batch_populate_information_scores,

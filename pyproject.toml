@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "edupulse"
+version = "0.2.0"
+description = "School operations radio capture and analysis (ERME research)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy>=1.26",
+  "sounddevice>=0.4.6",
+  "soundfile>=0.12.1",
+]
+
+[project.optional-dependencies]
+whisper = ["faster-whisper>=1.0.0", "scipy>=1.13"]
+speaker = ["pyannote.audio"]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+include = ["edupulse*"]

@@ -85,20 +85,9 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-# Allow running this script directly from test/ (or any subdir) without
-# PYTHONPATH=. or pip install -e. Walk up until the dir containing edupulse/
-# package is found. Keeps usage examples in docs and --help simple.
-_here = Path(__file__).resolve()
-for _ in range(6):
-    if (_here / "edupulse" / "__init__.py").exists():
-        if str(_here) not in sys.path:
-            sys.path.insert(0, str(_here))
-        break
-    _here = _here.parent
-else:
-    _root = Path(__file__).resolve().parents[1]
-    if str(_root) not in sys.path:
-        sys.path.insert(0, str(_root))
+_repo = Path(__file__).resolve().parents[1]
+if (_repo / "edupulse" / "__init__.py").is_file() and str(_repo) not in sys.path:
+    sys.path.insert(0, str(_repo))
 
 import numpy as np
 
@@ -106,6 +95,7 @@ import numpy as np
 # Shared categorization + incident linking (single source of truth)
 # See edupulse/analysis.py for the implementation and detailed radio protocol rules.
 # =============================================================================
+from edupulse.audio_io import downmix_to_mono, find_uca222, get_levels, print_input_devices
 from edupulse.analysis import (
     TRANSMISSION_CATEGORIES,
     build_enhanced_initial_prompt,
@@ -335,7 +325,6 @@ def realtime_monitor(
                 if max_duration and (time.time() - total_start) >= max_duration:
                     print("\nMax duration reached.")
                     stop_event.set()
-                    break
 
                 audio, _ = stream.read(blocksize)
                 now = time.time()
@@ -479,7 +468,6 @@ def realtime_monitor(
             if max_duration and (time.time() - total_start) >= max_duration:
                 print("\nMax duration reached.")
                 stop_event.set()
-                break
             time.sleep(0.1)
     except Exception as e:
         print(f"\nError during monitoring: {e}")

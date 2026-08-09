@@ -41,42 +41,33 @@ def expand_path(p: str | Path) -> Path:
         return path
 
 
+# Session folder names used as the "complete" clean reference set (when present).
+DEFAULT_REFERENCE_SESSION_NAMES: tuple[str, ...] = (
+    "2026-06-05_last-day-2",
+    "2026-06-09_2026-06-08_graduation",
+)
+
+
 def default_reference_capture_dirs() -> list[str]:
     """Dirs used as 'complete' clean references for batch info-scores / corpus.
 
-    Prefer portable layout under ~/edupulse/captures/<session>.
-    Falls back to historical absolute lab paths if they still exist.
+    Uses ~/edupulse/captures/<session> when those folders exist.
+    Override with env EDUPULSE_REFERENCE_DIRS (os.pathsep-separated).
     """
+    env = os.environ.get("EDUPULSE_REFERENCE_DIRS", "").strip()
+    if env:
+        return [str(expand_path(p)) for p in env.split(os.pathsep) if p.strip()]
+
     home_cap = default_captures_dir()
-    candidates = [
-        home_cap / "2026-06-05_last-day-2",
-        home_cap / "2026-06-09_2026-06-08_graduation",
-        # Historical laptop paths (Linux lab only)
-        Path("/home/joseph/edupulse/captures/2026-06-05_last-day-2"),
-        Path("/home/joseph/edupulse/captures/2026-06-09_2026-06-08_graduation"),
+    existing = [
+        str((home_cap / name).resolve())
+        for name in DEFAULT_REFERENCE_SESSION_NAMES
+        if (home_cap / name).is_dir()
     ]
-    seen: set[str] = set()
-    out: list[str] = []
-    for c in candidates:
-        try:
-            key = str(c.resolve()) if c.exists() else str(c)
-        except OSError:
-            key = str(c)
-        if key in seen:
-            continue
-        seen.add(key)
-        # Keep first two logical sessions even if missing (caller may create later)
-        if c.exists() or "2026-06-05" in c.name or "graduation" in c.name:
-            if c.exists() or len(out) < 2:
-                out.append(str(c))
-    # De-dupe to unique existing first, then placeholders
-    existing = [p for p in out if Path(p).exists()]
     if existing:
         return existing
-    return [
-        str(home_cap / "2026-06-05_last-day-2"),
-        str(home_cap / "2026-06-09_2026-06-08_graduation"),
-    ]
+    # Placeholders for docs/callers that only need stable path strings
+    return [str(home_cap / name) for name in DEFAULT_REFERENCE_SESSION_NAMES]
 
 
 def list_input_devices() -> list[dict[str, Any]]:
@@ -111,6 +102,42 @@ def list_input_devices() -> list[dict[str, Any]]:
             }
         )
     return rows
+
+
+_DEFAULT_INPUT_PREFER = (
+    "uca222",
+    "behringer",
+    "pcm2902",
+    "usb audio codec",
+    "usb audio",
+)
+
+
+def find_preferred_input(
+    prefer: tuple[str, ...] = _DEFAULT_INPUT_PREFER,
+    *,
+    verbose: bool = False,
+) -> int | None:
+    """Pick best matching input device index (radio USB first)."""
+    rows = list_input_devices()
+    scored: list[tuple[int, int, str]] = []
+    for r in rows:
+        name = r["name"].lower()
+        score = 0
+        for rank, needle in enumerate(prefer):
+            if needle in name:
+                # earlier prefer entries score higher
+                score = 100 - rank * 10
+                break
+        if score > 0:
+            scored.append((score, int(r["index"]), r["name"]))
+    if not scored:
+        return None
+    scored.sort(reverse=True)
+    best_score, best_idx, best_name = scored[0]
+    if verbose:
+        print(f"Found likely radio input: [{best_idx}] {best_name}")
+    return best_idx
 
 
 def print_input_devices(file=None) -> None:
