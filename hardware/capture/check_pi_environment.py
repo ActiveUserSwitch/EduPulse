@@ -13,6 +13,10 @@ on other Linux machines (laptop dev) for the Python package checks and basic inf
 
 Usage:
     python check_pi_environment.py
+
+For Windows (or any machine where you want sounddevice device indices):
+    python check_audio_environment.py
+    python check_audio_environment.py --list-devices
 """
 
 import shutil

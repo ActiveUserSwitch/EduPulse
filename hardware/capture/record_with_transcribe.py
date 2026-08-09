@@ -917,7 +917,17 @@ def main():
         default=None,
         help="Label for this run (e.g. finals-day3) - included in session directory name",
     )
-    parser.add_argument("--device", type=int, default=None, help="Sound device index (see --list-devices from the test script)")
+    parser.add_argument(
+        "--device",
+        type=int,
+        default=None,
+        help="Sound device index (use --list-devices; WASAPI on Windows, ALSA/etc on Linux)",
+    )
+    parser.add_argument(
+        "--list-devices",
+        action="store_true",
+        help="List sounddevice input devices (Windows/Linux) and exit",
+    )
     parser.add_argument("--speech-threshold", type=float, default=-32.0, dest="speech_threshold",
                         help="RMS dB threshold for speech (hard lower bound, default -32). "
                              "The system does a short background measurement at start then continuously adapts "
@@ -962,6 +972,21 @@ def main():
 
     if args.list_categories:
         list_categories()
+        return
+
+    if args.list_devices:
+        try:
+            from edupulse.platform_util import print_input_devices
+
+            print_input_devices()
+        except Exception as e:
+            # Fallback if package path not set up yet
+            try:
+                import sounddevice as sd
+
+                print(sd.query_devices())
+            except Exception as e2:
+                print(f"ERROR listing devices: {e} / {e2}")
         return
 
     # Parse fingerprint data (staff names + common words) for the audio "fingerprint"

@@ -28,6 +28,14 @@ from .analysis import (  # noqa: F401
     load_hand_coded_onward_corpus,
 )
 
+# Cross-platform path/device helpers (Windows + Linux)
+from .platform_util import (  # noqa: F401
+    default_captures_dir,
+    is_windows,
+    list_input_devices,
+    print_input_devices,
+)
+
 # Safe optional re-exports (never fail the package import if torch/pyannote missing)
 try:
     from .speaker import (  # noqa: F401

@@ -2,7 +2,8 @@
 
 **Audience:** Another Grok Build (or human) instance with a fresh clone of this repo on **Windows**.  
 **Goal:** Run EduPulse capture + offline pipeline on Windows without rewriting the product.  
-**Status:** Plan only (not fully implemented). Prefer minimal, reversible changes.
+**Status:** Implementation in progress (WP0–WP4 scaffolded in-repo). Prefer minimal, reversible changes.  
+**On Windows machine:** follow `hardware/capture/WINDOWS_QUICKSTART.md` + `Setup-EduPulseWindows.ps1`.
 
 ---
 
@@ -241,4 +242,15 @@ Windows port is **complete enough** when:
 
 ---
 
-*Last updated for handoff with repo sync (Windows plan). Prefer executing WP0–WP3 before any large refactors.*
+## 11. Implementation log (repo)
+
+| Item | Location | Status |
+|------|----------|--------|
+| Platform helpers | `edupulse/platform_util.py` | Done |
+| Portable reference dirs / HF token search | `analysis.py`, `speaker.py` | Done |
+| Device list CLI | `check_audio_environment.py`, `record_with_transcribe.py --list-devices` | Done |
+| PowerShell setup + capture launcher | `Setup-EduPulseWindows.ps1`, `edupulse-record.ps1` | Done |
+| Quickstart | `hardware/capture/WINDOWS_QUICKSTART.md` | Done |
+| Smoke on real Windows + UCA222 | (user work PC) | **Todo** |
+
+*Last updated: Windows port scaffold landed. Complete WP0/WP3 smoke on the work machine next.*

@@ -794,10 +794,9 @@ def load_hand_coded_onward_corpus() -> list[dict]:
     import json
     import os
 
-    ref_dirs = [
-        "/home/joseph/edupulse/captures/2026-06-05_last-day-2",
-        "/home/joseph/edupulse/captures/2026-06-09_2026-06-08_graduation",
-    ]
+    from .platform_util import default_reference_capture_dirs
+
+    ref_dirs = default_reference_capture_dirs()
     items: list[dict] = []
     for d in ref_dirs:
         for j in glob.glob(os.path.join(d, "tx_*.json")):
@@ -1125,10 +1124,9 @@ def batch_populate_acoustic_zscores(
     from pathlib import Path
 
     if reference_dirs is None:
-        reference_dirs = [
-            "/home/joseph/edupulse/captures/2026-06-05_last-day-2",
-            "/home/joseph/edupulse/captures/2026-06-09_2026-06-08_graduation",
-        ]
+        from .platform_util import default_reference_capture_dirs
+
+        reference_dirs = default_reference_capture_dirs()
 
     # 1. Collect reference acoustic features for "normal" clips
     ref_features = []

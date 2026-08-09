@@ -69,6 +69,7 @@ from __future__ import annotations
 import os
 import pickle
 import warnings
+from pathlib import Path
 from typing import Any, Optional
 
 # We deliberately do NOT import numpy / torch / pyannote at module level.
@@ -96,17 +97,25 @@ def _discover_hf_token(explicit_token: str | None = None) -> str | None:
     if tok:
         return tok
 
-    # 2. Search for HuggingFaceToken.txt (user convenience)
-    candidates = [
-        "HuggingFaceToken.txt",                                   # cwd
-        os.path.expanduser("~/HuggingFaceToken.txt"),             # home
-        # From this file (edupulse/speaker.py) -> GrokBuild root
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "HuggingFaceToken.txt")),
-        # Explicit workspace path (common in this project)
-        "/home/joseph/Documents/GrokBuild/HuggingFaceToken.txt",
-        # In the capture dir (for Pi / field use)
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "hardware", "capture", "HuggingFaceToken.txt")),
-    ]
+    # 2. Search for HuggingFaceToken.txt (portable; no hard-coded /home/...)
+    try:
+        from .platform_util import huggingface_token_search_paths
+
+        path_objs = huggingface_token_search_paths()
+    except Exception:
+        path_objs = [
+            Path("HuggingFaceToken.txt"),
+            Path.home() / "HuggingFaceToken.txt",
+            Path(__file__).resolve().parents[1] / "HuggingFaceToken.txt",
+        ]
+
+    candidates = [str(p) for p in path_objs]
+    # Capture dir convenience (field / Pi)
+    candidates.append(
+        os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "hardware", "capture", "HuggingFaceToken.txt")
+        )
+    )
 
     for p in candidates:
         if p and os.path.isfile(p):

@@ -1,8 +1,9 @@
 # EduPulse
 
-**Lab location:** `~/Documents/GrokBuild/EduPulse` (this repo).  
-**Live data:** `~/edupulse` (captures / processed — not in git).  
-**Shortcut:** `~/edupulse-code` → this directory.  
+**Lab location (Linux):** `~/Documents/GrokBuild/EduPulse` (this repo).  
+**Live data:** `~/edupulse` or `%USERPROFILE%\edupulse` (captures / processed — not in git).  
+**Shortcut (Linux):** `~/edupulse-code` → this directory.  
+**Windows work PC:** see [`hardware/capture/WINDOWS_QUICKSTART.md`](hardware/capture/WINDOWS_QUICKSTART.md) and [`WINDOWS_PORT_PLAN.md`](WINDOWS_PORT_PLAN.md).  
 Sibling Grok apps (ClipFinder, StockExplorer, …) live next to this folder under `GrokBuild/`, not inside this repo.
 
 EduPulse captures school administrative radio traffic
