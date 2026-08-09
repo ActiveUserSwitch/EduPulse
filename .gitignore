@@ -152,3 +152,6 @@ models/
 .cache/
 **/huggingface/
 **/torch/
+
+# Local Grok todo store (not product code)
+.grok/
