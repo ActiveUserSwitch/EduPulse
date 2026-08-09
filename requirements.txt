@@ -1,5 +1,5 @@
 # EduPulse Python dependencies
-# For audio capture (record_*.py, test_*.py, check_pi_environment.py)
+# For audio capture (record_*.py, test_*.py, check_audio_environment.py)
 sounddevice>=0.4.6
 soundfile>=0.12.1
 numpy>=1.26

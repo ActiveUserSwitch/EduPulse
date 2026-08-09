@@ -7,7 +7,8 @@ Minimal Option A approach:
 - Secondary control via UCA222 hardware gain knobs
 - This script is for initial bring-up and clipping tests only.
 
-Run this on the Raspberry Pi after connecting the hardware.
+Run after connecting PX650 + UCA222 (any host: Windows work PC preferred;
+Linux/Pi optional). Use --list-devices / check_audio_environment.py for indices.
 
 Usage examples:
     python test_px650.py
@@ -75,7 +76,7 @@ def parse_args():
         "--device",
         type=int,
         default=None,
-        help="ALSA device index (run 'arecord -l' to list)"
+        help="sounddevice device index (check_audio_environment.py --list-devices)"
     )
     return parser.parse_args()
 
@@ -138,8 +139,8 @@ def record_test(data_dir: Path, duration: int, device: int | None = None):
     except Exception as e:
         print(f"\nERROR during recording: {e}")
         print("Common fixes:")
-        print("  - Run on the Pi:  arecord -l")
-        print("  - Pass --device <index> or edit the script")
+        print("  - List devices: python hardware/capture/check_audio_environment.py --list-devices")
+        print("  - Pass --device <index>")
 
 
 def main():

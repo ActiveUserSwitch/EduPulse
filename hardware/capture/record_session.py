@@ -276,7 +276,7 @@ if __name__ == "__main__":
     parser.add_argument("--duration", type=int, default=DEFAULT_DURATION,
                         help="Recording duration in seconds (omit for manual stop with Ctrl+C)")
     parser.add_argument("--device", type=int, default=None,
-                        help="Sound device index (see arecord -l)")
+                        help="Sound device index (use check_audio_environment.py --list-devices)")
     parser.add_argument("--label", type=str, default=None,
                         help="Optional label/tag to include in recorded filenames")
     parser.add_argument("--preview", action="store_true",

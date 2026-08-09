@@ -2,7 +2,11 @@
 
 This is your practical step-by-step guide for the first day you have the UCA222 in hand.
 
-> **Note (laptop continuation):** The wiring guide and all scripts are now in this git repo under `hardware/`. The old "copy from local workspace" steps below are historical from the initial Pi session. When working from a fresh clone on the Pi you can simply `git pull` (or rsync from laptop clone).
+> **Status: HISTORICAL / OPTIONAL (Raspberry Pi bring-up).**  
+> **Primary live path:** Windows work PC — see `WINDOWS_QUICKSTART.md`.  
+> The wiring guide and scripts live in this git repo under `hardware/`.  
+> Steps below assume a Pi + ALSA (`arecord`, `check_pi_environment.py`).  
+> On Windows use `check_audio_environment.py` and `--list-devices` instead.
 
 **Current Constraints (as of now):**
 - Raspberry Pi 4 (8GB)

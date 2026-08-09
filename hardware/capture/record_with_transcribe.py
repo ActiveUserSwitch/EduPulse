@@ -142,7 +142,7 @@ from edupulse.analysis import (
 )
 
 # =============================================================================
-# Audio helpers (adapted from record_session.py + test_realtime_transcribe.py for laptop/Pi parity)
+# Audio helpers (adapted from record_session.py + test_realtime_transcribe.py; host-agnostic)
 # =============================================================================
 
 SAMPLE_RATE = 16000

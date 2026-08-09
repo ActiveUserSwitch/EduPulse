@@ -131,12 +131,24 @@ technical details.
 See `hardware/capture/staff_names.example.txt` and
 `common_words.example.txt` for format.
 
+## Deployment (primary vs historical)
+
+| Role | Where |
+|------|--------|
+| **Live capture (primary)** | **Windows work PC** — `hardware/capture/WINDOWS_QUICKSTART.md` |
+| Offline retag / Whisper / validation | Windows or Linux |
+| IT security brief | `docs/IT_SECURITY_REVIEW.md` |
+| Raspberry Pi / ALSA bring-up | **Historical only** — see checklists under `hardware/capture/` marked optional/Pi |
+
+Hardware chain (same on any host): PX650 → UCA222 → USB → PC.
+
 ## Historical / Old Docs
 
-Old bring-up checklists and the original plan live in
-`hardware/capture/`. They are useful for context but are
-no longer the active workflow. The current recommended
-process is in this root README + `ROADMAP.md`.
+Old Pi bring-up checklists and the original plan live in
+`hardware/capture/` (names like `QUICKSTART_ALREADY_RUNNING_PI.md`,
+`check_pi_environment.py`, `alsa_config.md`). Useful if you ever
+run on a Pi again; **not** the active school-PC workflow.
+Current process: this README + `ROADMAP.md` + Windows quickstart.
 
 - This follows the radio protocol (name calls → ack →
   message → clarification) and prevents over-linking
@@ -144,10 +156,10 @@ process is in this root README + `ROADMAP.md`.
   students. Use --list-categories to see the current list.
 - Add proper metadata (BEXT or INFO chunks) to WAVs + a
   small index/sidecar.
-- Privacy / automated cleanup tooling.
-- Packaging / install script for the Pi (systemd unit for
-  continuous mode?).
-- Cross-platform friendly diagnostics.
+- Privacy / automated cleanup tooling (local captures only).
+- Windows packaging polish (Task Scheduler optional); Pi systemd
+  is optional/historical only.
+- Prefer `check_audio_environment.py` over Pi-only diagnostics.
 
 Contributions / iteration welcome. The goal is a complete,
 reliable capture foundation that then feeds the "pulse"

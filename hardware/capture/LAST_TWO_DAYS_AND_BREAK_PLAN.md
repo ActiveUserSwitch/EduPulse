@@ -36,11 +36,12 @@ collection.
      the .wav + read the best transcript + category + INC. Score transcription
      accuracy, cat correctness, linking quality. This drives everything else.
 
-6. **Long-term prep**:
-   - Any lessons for the Pi return (VAD params that worked best, storage layout,
-     one-channel handling).
+6. **Long-term prep** (updated: **Windows work PC is live target**, not Raspberry Pi):
+   - VAD params that worked best, storage layout, one-channel handling — apply on
+     Windows (WASAPI / UCA222). See `WINDOWS_QUICKSTART.md`.
    - Consider a small "reprocess_session.py" that walks a whole day dir and produces
      a fully validated manifest + report.
+   - Raspberry Pi/ALSA notes elsewhere in this tree are historical only.
 
 The raw .wav files are the treasure. Everything else (light transcripts, initial
 cats/INCs) is scaffolding that gets replaced/improved during the break.
@@ -64,8 +65,8 @@ cats/INCs) is scaffolding that gets replaced/improved during the break.
 - Validation: randomly sample 50-100 real tx, listen + score transcription
   accuracy, category correctness, INC linking quality. This drives the next
   version.
-- Prepare for return to Pi: any lessons on VAD params, device handling, storage
-  layout, etc.
+- Prepare Windows go-live: VAD params, device index, storage layout under
+  `%USERPROFILE%\\edupulse\\captures` (Pi path is obsolete for primary deployment).
 
 **Practical tips for the break**:
 - Immediately after the last run, `rsync -a ~/edupulse/captures/

@@ -16,7 +16,7 @@
 | Live light Whisper (tiny/base) during capture | **P1** | CPU or CUDA |
 | Offline large-v3 / retro_upgrade | **P1** | Same as Linux |
 | pyannote speaker layer | **P2** | Optional; torch + HF token |
-| Pi/ALSA docs parity | **P3** | Document only; no ALSA on Windows |
+| Pi/ALSA docs (historical) | **P3** | Kept labeled optional; primary path is Windows |
 | systemd / bash launchers | **N/A** | Replace with PowerShell |
 
 **Non-goals:** Native WinUI app, MSI installer, rewriting analysis in C#, dropping pathlib, changing WAV/sidecar schema.
@@ -91,10 +91,10 @@ Offline:
 **Problem:** Docs/scripts mention `arecord -l`; that is ALSA-only.
 
 **Do:**
-1. Prefer existing `sounddevice.query_devices()` path in `check_pi_environment.py` / capture scripts.
-2. Add Windows-friendly listing (new or extend `check_pi_environment.py`):
-   - Rename conceptually to “environment check” or add `check_audio_environment.py`.
-   - On Windows: skip `arecord`/`aplay`; always print `sd.query_devices()` with indices, host API, max input channels.
+1. Prefer `sounddevice.query_devices()` via `check_audio_environment.py` / capture `--list-devices`.
+2. Windows-friendly listing (done: `check_audio_environment.py`):
+   - On Windows: skip `arecord`/`aplay`; print `sd.query_devices()` with indices, host API, max input channels.
+   - `check_pi_environment.py` remains optional/historical for Linux/Pi only.
 3. Ensure capture CLIs accept **`--device INDEX`** (verify `record_session.py` / `record_with_transcribe.py` / `record_continuous.py`; add if missing).
 4. Document: Windows Sound → Input → set UCA222 as default **or** pass `--device`.
 
@@ -163,7 +163,7 @@ python test\test_whisper.py `
    - activate venv if present
    - call `record_with_transcribe.py` with defaults pointing at `$env:USERPROFILE\edupulse\captures`
 
-**Do not** delete Pi/ALSA docs; label them “Linux/Pi”.
+**Do not** delete Pi/ALSA docs; label them historical/optional (Windows is primary live).
 
 ---
 

@@ -1,5 +1,8 @@
 # EduPulse Session Summary – May 27, 2025
 
+> **Archive note:** Early **Raspberry Pi** bring-up day. Current primary live
+> target is the **Windows work PC** (`hardware/capture/WINDOWS_QUICKSTART.md`).
+
 **Goal of the day:** Prepare as much as possible before the Behringer UCA222 arrives so we can move fast on Day 1.
 
 ## Current Hardware State

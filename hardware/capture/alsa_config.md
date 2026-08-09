@@ -1,7 +1,10 @@
 # ALSA Configuration for Behringer UCA222 on Raspberry Pi 4
 
-This document contains recommended ALSA settings for reliable capture with the UCA222 on a Pi 4.
+> **Status: HISTORICAL / OPTIONAL (Linux/Pi only).**  
+> Windows uses WASAPI via `sounddevice` — no ALSA/`~/.asoundrc`.  
+> Primary live path: `WINDOWS_QUICKSTART.md`.
 
+This document contains recommended ALSA settings for reliable capture with the UCA222 on a Pi 4 (if you use that host).
 ## Quick Start
 
 Create or edit `~/.asoundrc` on the Pi:

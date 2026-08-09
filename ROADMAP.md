@@ -79,16 +79,19 @@ no 'thanks for watching'."
      participation (who talks on the radio), student
      mention rate, INC length distributions, etc.
 
-6. **Prepare for return to Pi**
-   - Any VAD parameter lessons that worked well on real
+6. **Prepare Windows work-PC go-live (primary live station)**
+   - VAD parameter lessons that worked well on real
      data (pre-roll, tail padding, silence timeout,
-     adaptive margin, etc.).
-   - Storage layout and rotation strategy that survived
-     a full day.
+     adaptive margin, etc.) — apply on Windows WASAPI.
+   - Storage layout under `%USERPROFILE%\edupulse\captures`
+     and rotation/cleanup that survived a full day.
    - One-channel audio handling (we auto-select dominant;
-     document any remaining gotchas).
-   - Systemd / always-on service skeleton (if not already
-     present).
+     document any remaining gotchas with UCA222 on Windows).
+   - Ops notes: device index, exclusive-mode, Ctrl+C flush,
+     PowerShell launchers (`edupulse-record.ps1`).
+   - See `hardware/capture/WINDOWS_QUICKSTART.md`.
+   - Raspberry Pi / ALSA docs under `hardware/capture/` are
+     **historical / optional** only (not the primary path).
 
 ## Nice-to-Haves (lower priority)
 
@@ -119,7 +122,16 @@ no 'thanks for watching'."
     participation equity, who talks most by role, etc.
   - This stays strictly above the VAD + transcription core.
 
-## When You Come Back After the Break
+## Active deployment model (ERME research)
+
+| Role | Platform |
+|------|----------|
+| **Live capture (primary)** | Windows work PC + UCA222 (WASAPI) |
+| **Offline re-transcribe / retag / validation** | Windows and/or Linux laptop |
+| **Code + IT review** | GitHub (no live audio or fingerprints) |
+| **Raspberry Pi / ALSA** | Optional historical path only |
+
+### When you sit down to work (any machine)
 
 1. Activate the env and run `retag_session.py` on every
    session using the current `staff_names.txt` +
@@ -130,10 +142,11 @@ no 'thanks for watching'."
 3. Look at the list of remaining low-quality segments and
    decide what to re-transcribe next with heavier models.
 4. Iterate rules → retag → measure quality. Repeat.
+5. For new live collection: Windows go-live checklist in
+   `WINDOWS_QUICKSTART.md` (after IT approval).
 
 The raw `.wav` files + the two fingerprint text files are
-the only things that truly need to survive the break
-intact.
+the only things that truly need to survive intact between machines.
 
 ## June 2026 Updates (post-collection iteration)
 

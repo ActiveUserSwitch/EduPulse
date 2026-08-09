@@ -1,6 +1,7 @@
 #!/bin/bash
 # Quick storage diagnostic for EduPulse Pi
-# Run this on the Raspberry Pi when SSDs are not showing up
+# Optional Linux/Pi helper when external disks are not showing up.
+# Not used on the Windows work-PC primary path.
 
 echo "=== EduPulse Storage Diagnosis ==="
 echo "Date: $(date)"

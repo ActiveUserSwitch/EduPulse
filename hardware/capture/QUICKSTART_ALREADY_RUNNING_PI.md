@@ -1,5 +1,11 @@
 # Quick Start — Already Running Pi (Pi 4 8GB)
 
+> **Status: HISTORICAL / OPTIONAL.**  
+> Primary live capture is now the **Windows work PC**  
+> (`WINDOWS_QUICKSTART.md`). Keep this file only if you redeploy on a  
+> Raspberry Pi. Prefer `check_audio_environment.py` over Pi-only steps when  
+> working on Windows or a general Linux laptop.
+
 This guide is for the current situation:
 
 - **Raspberry Pi 4 Model B Rev 1.4**, 8GB RAM

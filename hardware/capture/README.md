@@ -4,34 +4,34 @@ Scripts for capturing and post-processing school radio traffic.
 
 **This is the active directory for the capture + offline iteration tools.**
 
-See the root `README.md` and `ROADMAP.md` for the current overall status and
-recommended workflow.
+**Live capture primary target:** **Windows work PC** (see `WINDOWS_QUICKSTART.md`).  
+**Offline tools** run on Windows or Linux.  
+**Raspberry Pi / ALSA** material below is **optional / historical** only.
+
+See the root `README.md` and `ROADMAP.md` for overall status.
 
 ## Primary Tools (use these)
 
-- `record_with_transcribe.py` — The tool used for the final full-day runs.
-  Produces one raw `.wav` per transmission + sidecar JSON +
-  `session_manifest.jsonl`.
-- `retag_session.py` — Re-apply current rules (categorization + IncidentTracker +
-  fingerprint) to any previous session. Updates sidecars. Run this after any
-  change to `edupulse/analysis.py` or the fingerprint files.
-- `analyze_manifest.py` — Quick stats + "Data Quality Summary" from a `.retagged.jsonl`.
-- `staff_names.txt` + `common_words.txt` — The live audio fingerprint files (one
-  full staff name or common word/phrase per line). These are the highest-leverage
-  things you maintain.
+- `record_with_transcribe.py` — Full-day / session capture (WAV + sidecar +
+  `session_manifest.jsonl`). Prefer `--list-devices` then `--device N`.
+- `edupulse-record.ps1` / `Setup-EduPulseWindows.ps1` — Windows launch + bootstrap.
+- `check_audio_environment.py` — Cross-platform device/package check (prefer this).
+- `retag_session.py` — Re-apply rules + fingerprint to a previous session.
+- `analyze_manifest.py` — Stats + data quality summary from `.retagged.jsonl`.
+- `staff_names.txt` + `common_words.txt` — Live fingerprints (**local only**, gitignored).
 
-## Supporting / Historical
+## Supporting / Historical (including Raspberry Pi)
 
-- `record_session.py` — Earlier tool for short/controlled bring-up sessions (has
-  `--preview` / `--label`).
-- Old checklists (`DAY1_UCA222_CHECKLIST.md`, `FIRST_LONG_RUN_CHECKLIST.md`, etc.)
-  are kept for historical reference only. The active process is described in the
-  root docs.
-- `test_px650.py`, `record_continuous.py`, etc. — early experiments.
+- `record_session.py` — Short bring-up sessions (`--preview` / `--label`).
+- `check_pi_environment.py`, `alsa_config.md`, `asoundrc.example`,
+  `QUICKSTART_ALREADY_RUNNING_PI.md`, `pi_storage_recommendations.md`,
+  `DAY1_UCA222_CHECKLIST.md` — **Pi/ALSA era**; keep for reference if you ever
+  deploy on a Pi again. Not the school work-PC path.
+- `test_px650.py`, `record_continuous.py` — early experiments.
 
 ## Wiring & Hardware Notes
 
-See `../wiring/Cobra_PX650_UCA222.md`.
+Radio chain (any host): see `../wiring/Cobra_PX650_UCA222.md`  
+(Windows section first; Pi section labeled optional).
 
-For the current recommended way to launch a capture or re-process data, read the
-root `README.md`.
+For IT / privacy (no live data in Git): `../../docs/IT_SECURITY_REVIEW.md`.

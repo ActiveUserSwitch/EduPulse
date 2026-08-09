@@ -1,6 +1,7 @@
 # EduPulse on Windows — Quick Start
 
-Run capture + offline analysis on a **Windows work PC** with the same artifacts as Linux/Pi.
+Run capture + offline analysis on a **Windows work PC** (primary live station)
+with the same artifacts as any Linux host.
 
 Full design notes: [`WINDOWS_PORT_PLAN.md`](../../WINDOWS_PORT_PLAN.md) (repo root).  
 **IT / security brief:** [`docs/IT_SECURITY_REVIEW.md`](../../docs/IT_SECURITY_REVIEW.md)
@@ -161,4 +162,5 @@ Defaults use `Path.home() / "edupulse" / ...` — no Linux-only `/home/...` requ
 
 ---
 
-*Pair with Pi docs under `hardware/capture/*` labeled Linux/Pi; this file is Windows-only ops.*
+*This file is the primary live-ops guide. Raspberry Pi / ALSA docs under
+`hardware/capture/*` are historical/optional only.*

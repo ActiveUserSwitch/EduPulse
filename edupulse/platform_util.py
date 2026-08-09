@@ -1,9 +1,8 @@
-"""Cross-platform helpers for EduPulse (Linux/Pi + Windows).
+"""Cross-platform helpers for EduPulse (Windows primary live host + Linux).
 
 Keep this small. Prefer pathlib + sounddevice; avoid OS-specific sprawl
-in capture scripts.
+in capture scripts. Raspberry Pi is optional/historical only.
 """
-
 from __future__ import annotations
 
 import os

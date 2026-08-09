@@ -1,16 +1,19 @@
-# Wiring: Cobra PX650 + Behringer UCA222 on Raspberry Pi 4
+# Wiring: Cobra PX650 + Behringer UCA222
 
 This document describes the physical connections for **Option A** (minimal control
 via physical knobs only).
 
+**Primary host (current plan):** Windows work PC (WASAPI via `sounddevice`).  
+**Optional / historical:** Raspberry Pi 4 + ALSA — see notes at the end.
+
 ## Hardware
 
-- Raspberry Pi 4 Model B (8GB)
+- **Host PC** (Windows work station preferred; Linux laptop OK)
 - Cobra PX650 radio (2.5mm accessory / headset jack on the side or back)
 - 2.5mm TRS male → dual RCA male cable (confirmed correct cable)
 - Behringer UCA222 USB audio interface
-- USB cable for the UCA222 (preferably to a blue USB 3.0 port on the Pi)
-- (Optional but recommended for initial testing) Powered USB hub if power issues appear
+- USB cable for the UCA222 (prefer USB 3.0 port when available)
+- (Optional) Powered USB hub if power issues appear
 
 ## Connections (Option A)
 
@@ -26,85 +29,85 @@ via physical knobs only).
      consistent is nice. With the 2.5mm cable on this radio, typically **only one
      channel** will carry strong audio.
 
-3. **UCA222 → Pi**
-   - Plug the UCA222's USB cable into a USB 3.0 port (the blue ones) on the Raspberry
-     Pi 4.
-   - Avoid the black USB 2.0 ports for best results with audio class devices.
-   - If the Pi is powered via its official supply and you see dropouts, try a powered
-     USB hub between the UCA222 and the Pi.
+3. **UCA222 → host PC (primary: Windows)**
+   - Plug the UCA222's USB cable into the work PC (or laptop).
+   - Windows: set the device as input or pass `--device N` from
+     `check_audio_environment.py --list-devices` / `record_with_transcribe.py --list-devices`.
+   - If open fails: Sound → device → Properties → Advanced → uncheck exclusive mode.
+   - See `hardware/capture/WINDOWS_QUICKSTART.md`.
 
 4. **Knob Philosophy (Option A)**
    - Primary level control: the volume knob on the Cobra PX650 itself.
    - Secondary/fine level control: the two hardware gain knobs on the front of the
      UCA222.
-   - Do **not** rely on ALSA software gain in early testing unless the hardware knobs
+   - Do **not** rely on host software gain in early testing unless the hardware knobs
      can't get you into a good range.
    - Start conservative: PX650 ~25-35%, UCA222 gains ~40-60%. Increase radio volume
      first if too quiet.
 
 ## First Power-Up Checklist
 
-- [ ] Pi powered off before first connection (recommended).
-- [ ] UCA222 plugged into blue USB port.
+- [ ] Host PC ready (Windows preferred).
+- [ ] UCA222 plugged into USB.
 - [ ] 2.5mm seated fully in the PX650.
 - [ ] RCA plugs fully seated in UCA222 Line In.
 - [ ] PX650 turned on and volume at low-medium.
-- [ ] Pi powered on.
-- [ ] Verify detection:
+- [ ] Verify detection (prefer sounddevice, not ALSA-only):
+
+```powershell
+# Windows (primary)
+python hardware\capture\check_audio_environment.py --list-devices
+```
 
 ```bash
-arecord -l
-lsusb | grep -i -E 'behringer|uca|2902'   # 08bb:2902 is common for UCA222 class devices
+# Linux (optional)
+python hardware/capture/check_audio_environment.py --list-devices
+# Historical Pi-only: arecord -l
 ```
 
-Expected to see something like:
-```
-card 1: UCA222 [BEHRINGER UCA222], device 0: USB Audio [USB Audio]
-```
+Expect a Behringer / UCA222 / USB Audio entry with a numeric **index** for `--device`.
 
 ## Level Setting Tips
 
-- Use `python hardware/capture/record_session.py --preview` (or the
-  `edupulse-record --preview` launcher) to watch live RMS/peak levels without
-  writing files.
-- With the PX650 + 2.5mm cable, expect one channel to dominate. The script will
-  highlight `[L active]` or `[R active]`.
-- Watch for clipping (peaks near or above ~0 dBFS, or the warning in `test_px650.py`).
+- Use `python hardware/capture/record_session.py --preview` (or
+  `edupulse-record.ps1` / `edupulse-record --preview`) to watch live levels.
+- With the PX650 + 2.5mm cable, expect one channel to dominate. Scripts highlight
+  the active channel.
+- Watch for clipping (peaks near 0 dBFS).
 - Rule: turn the radio volume knob down before touching UCA222 knobs if you see
   clipping on normal speech.
 
 ## Troubleshooting Physical Layer
 
-| Symptom                    | Likely cause                          | Fix |
-|----------------------------|---------------------------------------|-----|
-| No UCA222 in arecord -l    | Wrong USB port / cable / power        | Try blue
-port, different cable, powered hub, reboot |
-| No audio in either channel | Cable not seated, radio off or volume 0, wrong jack
-on radio | Reseat 2.5mm, power on PX650, raise volume |
-| Only one channel works     | Normal for this radio + cable         | Use the
-louder channel in analysis later |
-| Crackling / USB dropouts   | Insufficient USB power or bandwidth   | Powered
-hub, shorter cable, USB 3 port |
-| Very low levels            | Radio volume too low or UCA222 gain too low | Raise
-PX650 knob first |
-| Heavy clipping             | Radio output hot for the gain setting | Lower PX650
-volume significantly |
+| Symptom | Likely cause | Fix |
+|---------|--------------|-----|
+| No UCA222 in device list | Wrong USB port / cable / power | Reseat USB, try another port/hub, reboot |
+| No audio in either channel | Cable not seated, radio off or volume 0 | Reseat 2.5mm, power on PX650, raise volume |
+| Only one channel works | Normal for this radio + cable | Analysis uses louder channel |
+| Crackling / USB dropouts | USB power or bandwidth | Hub, shorter cable, USB 3 port |
+| Very low levels | Radio/UCA222 gain low | Raise PX650 knob first |
+| Heavy clipping | Radio output too hot | Lower PX650 volume |
+| Windows stream open fails | Exclusive mode | Device Properties → Advanced → uncheck exclusive |
+
+## Optional / historical: Raspberry Pi 4
+
+If you deliberately deploy on a Pi (not the primary plan):
+
+- Prefer blue USB 3.0 ports; `arecord -l` / `alsa_config.md` may apply.
+- See `hardware/capture/QUICKSTART_ALREADY_RUNNING_PI.md` and
+  `DAY1_UCA222_CHECKLIST.md` (both labeled historical).
 
 ## Notes for Later
 
-- Once basic capture is stable we may add a small ALSA config (see
-  `alsa_config.md` and `asoundrc.example` in capture/).
-- SSD mounting will change the recommended `--data-dir` / base path for recordings.
-- For continuous / always-on later, consider a small enclosure or strain relief on
-  the 2.5mm and USB cables.
+- Data dir default: `~/edupulse/captures` or `%USERPROFILE%\edupulse\captures`.
+- Strain relief on 2.5mm and USB cables for long sessions.
 
 ## References
 
-- `hardware/capture/DAY1_UCA222_CHECKLIST.md`
-- `hardware/capture/QUICKSTART_ALREADY_RUNNING_PI.md`
-- `hardware/capture/record_session.py --help`
-- Session summary: `SESSION_SUMMARY_2025-05-27.md`
-
+- **Primary:** `hardware/capture/WINDOWS_QUICKSTART.md`
+- `hardware/capture/check_audio_environment.py`
+- Historical Pi: `DAY1_UCA222_CHECKLIST.md`, `QUICKSTART_ALREADY_RUNNING_PI.md`
+- Session archive: `SESSION_SUMMARY_2025-05-27.md`
 If you have photos of the actual wiring or updated pin/jack details, add them here
 or link to an album.
 

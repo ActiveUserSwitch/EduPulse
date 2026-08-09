@@ -11,8 +11,8 @@ then runs faster-whisper (default: tiny + int8 + cpu for speed) and prints
 the result with timestamps.
 
 Why this exists:
-- Quick iteration / testing of the capture + Whisper pipeline on the laptop
-  (or on the Pi) without filling the disk with long recordings.
+- Quick iteration / testing of the capture + Whisper pipeline on a laptop
+  or Windows work PC without filling the disk with long recordings.
 - Validate that the radio + interface + levels are good before doing long
   sessions.
 - Experiment with real-time transcription parameters (model size, prompts, temperature).
@@ -62,7 +62,7 @@ Notes:
   - "tiny" (default): fastest, acceptable for quick tests.
   - "base" or "small": significantly better on radio audio, still usable on laptop.
   - "medium" / "large-v3": best accuracy but slow (use for offline analysis on good hardware).
-  On the final Raspberry Pi 4 target you will likely be limited to tiny or base.
+  On low-power hosts use tiny or base; on the Windows work PC try base+ if CPU allows.
 - Use `--initial-prompt` with context like "School radio administrative messages:" — this reduces hallucinations and improves domain-specific terms.
 - Set `--temperature 0.0` (default) for most deterministic results.
 - We now select the louder audio channel (instead of averaging) which helps with the PX650 cable setup.

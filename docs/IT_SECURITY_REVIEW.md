@@ -13,9 +13,11 @@ This document describes what the software does, what is **not** in the repositor
 EduPulse is a **Python research tool** that:
 
 1. Captures **school operations radio** (line-level audio via USB interface such as Behringer UCA222 — not a classroom microphone bug).
-2. Writes **local** per-transmission WAV files + JSON metadata.
+2. Writes **local** per-transmission WAV files + JSON metadata on the **Windows work PC** (primary live host).
 3. Optionally runs **local** speech-to-text (faster-whisper) and rule-based categorization.
-4. Supports **offline** re-transcription, retagging, and validation metrics.
+4. Supports **offline** re-transcription, retagging, and validation metrics (Windows or Linux).
+
+Older Raspberry Pi / ALSA notes in the tree are historical only and not required for the school PC deployment.
 
 It is **not** a remote access trojan, keylogger, browser extension, or cloud chatbot that streams audio to a third-party LLM API as part of normal capture.
 

@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 """
-EduPulse cross-platform environment checker (Windows + Linux/Pi).
+EduPulse cross-platform environment checker (primary diagnostics tool).
+
+**Preferred** over check_pi_environment.py for all current work.
+Primary live capture host: Windows work PC (WASAPI).
 
 Reports:
   - OS / Python
-  - sounddevice input devices (WASAPI on Windows, ALSA/etc on Linux)
+  - sounddevice input devices (WASAPI on Windows; ALSA/Pulse/etc on Linux)
   - Python audio packages
   - Default capture paths
-  - Optional Pi-only ALSA/USB extras (skipped on Windows)
+  - Optional Linux extras: arecord/lsusb when present (skipped on Windows)
 
 Usage:
     python hardware/capture/check_audio_environment.py
     python hardware/capture/check_audio_environment.py --list-devices
 """
-
 from __future__ import annotations
 
 import argparse

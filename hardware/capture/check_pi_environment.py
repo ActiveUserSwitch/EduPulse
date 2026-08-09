@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 """
-EduPulse Pi Environment Checker
+EduPulse Pi Environment Checker (OPTIONAL / HISTORICAL)
 
-Run this on the target Raspberry Pi (or a development laptop) to get a quick report of:
-- Audio devices (especially whether UCA222/Behringer is visible) -- Pi-focused
-- Python audio packages (sounddevice, soundfile, numpy, scipy)
-- Storage / SSD mounts (Pi-focused)
+Prefer the cross-platform checker for current work:
+    python hardware/capture/check_audio_environment.py
+    python hardware/capture/check_audio_environment.py --list-devices
+
+Primary live capture target is a Windows work PC (WASAPI), not Raspberry Pi.
+This script remains for Linux/Pi bring-up (arecord, lsusb, df/lsblk).
+
+Reports (Pi-focused):
+- Audio devices via arecord/aplay when present
+- Python audio packages
+- Storage / SSD mounts
 - Basic system info
-
-This script is primarily written for the Raspberry Pi 4 target but degrades gracefully
-on other Linux machines (laptop dev) for the Python package checks and basic info.
 
 Usage:
     python check_pi_environment.py
-
-For Windows (or any machine where you want sounddevice device indices):
-    python check_audio_environment.py
-    python check_audio_environment.py --list-devices
 """
 
 import shutil
@@ -112,15 +112,16 @@ def check_system():
 
 def main():
     print("=" * 60)
-    print("EDUPULSE PI ENVIRONMENT CHECK")
+    print("EDUPULSE PI ENVIRONMENT CHECK (optional / historical)")
+    print("Prefer: check_audio_environment.py  |  Live target: Windows work PC")
     print("=" * 60)
     check_system()
     check_storage()
     check_audio()
     check_python_audio()
     print("\n" + "=" * 60)
-    print("Pi-specific audio/storage checks are best effort and will degrade on laptops.")
-    print("Run this again AFTER plugging in the UCA222 (on the real Pi).")
+    print("Pi-specific audio/storage checks degrade on non-Pi hosts.")
+    print("Windows/Linux general: python hardware/capture/check_audio_environment.py")
     print("=" * 60)
 
 if __name__ == "__main__":

@@ -1,5 +1,9 @@
 # Raspberry Pi Storage Layout Recommendations (2x 1TB SSDs)
 
+> **Status: HISTORICAL / OPTIONAL.** Written for an early Raspberry Pi field  
+> deployment. Primary live capture is now the **Windows work PC**  
+> (`%USERPROFILE%\edupulse\captures`). Use this doc only if you return to Pi SSDs.
+
 This document describes a practical storage layout for the EduPulse edge device when using two 1TB SSDs, as is the case on the current development Pi.
 
 ## Current Hardware Context (as of latest check)
