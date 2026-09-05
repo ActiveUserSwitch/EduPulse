@@ -64,6 +64,12 @@ TRANSMISSION_CATEGORIES: dict[str, list[str]] = {
         "how do you read", "read you", "over", "standing by",
         "test monitoring", "monitoring", "proctor", "finals monitoring"
     ],
+    "Emergency Drill (Fire, Lockdown, Tornado, etc.)": [
+        "fire drill", "lockdown drill", "tornado drill", "emergency drill", "drill",
+        "evacuate", "evacuation", "shelter in place", "lockdown", "secure the building",
+        "pull the alarm", "fire alarm", "alarm", "all clear", "return to class",
+        "danger zone", "staging area", "accountability",
+    ],
     "Other / Unclear": [],
 }
 
@@ -171,38 +177,230 @@ def is_likely_noise(transcript: str, duration_sec: float, whisper_conf: float | 
     return False
 
 
+def _staff_title_last(full_name: str) -> str:
+    """Compress 'Ms. Cheryl Yannett' → 'Ms. Yannett' (keep 2-token lines as-is)."""
+    parts = [p for p in full_name.strip().split() if p]
+    if len(parts) <= 2:
+        return " ".join(parts)
+    return f"{parts[0]} {parts[-1]}"
+
+
+def _staff_last_name(full_name: str) -> str:
+    parts = [p for p in full_name.strip().split() if p]
+    return parts[-1] if parts else ""
+
+
+# High-traffic call signs — always included; sit near the end of the prompt.
+_HOT_LAST_KEYS = (
+    "yannett",
+    "mayes",
+    "strickland",
+    "chandler",
+    "klepfer",
+    "hatfield",
+    "simmeth",
+    "medlin",
+    "boyes",
+    "richar",
+    "richard",
+    "steffler",
+    "worsham",
+    "tyson",
+    "marvel",
+    "moore",
+)
+
+# Always-on radio terms (merged with common_words.txt, then capped).
+_PRIORITY_TERMS = (
+    "10-4",
+    "go for",
+    "go ahead",
+    "thank you",
+    "chromebook",
+    "media center",
+    "phone call",
+    "my office",
+    "headed to",
+    "bus lot",
+    "bathroom",
+    "nurse",
+)
+
+# Stock Whisper / faster-whisper prompt slice (see docs/whisper_prompt_budget.md).
+_DEFAULT_PROMPT_TOKEN_BUDGET = 223
+
+
+def _prompt_token_count(text: str, tokenizer=None) -> int:
+    """Exact BPE count when tokenizer available; else ~chars/4 heuristic."""
+    if tokenizer is not None:
+        from edupulse.whisper_prompt_budget import measure_prompt
+
+        return measure_prompt(text, tokenizer=tokenizer).tokens
+    # Conservative heuristic (Whisper BPE is often denser than 4 chars/token on names).
+    return max(1, (len(text) + 3) // 3)
+
+
+def _pack_name_aliases(
+    ordered_aliases: list[str],
+    head: str,
+    tail: str,
+    budget: int,
+    tokenizer=None,
+    sep: str = " ",
+) -> tuple[str, int]:
+    """Greedily pack as many name aliases as fit under budget.
+
+    Use ``sep=' '`` for single-token phonetic codes, ``sep=', '`` for Title+Last.
+    Returns ``(prompt, n_packed)``.
+    """
+    if not ordered_aliases:
+        return " ".join(p for p in (head, tail) if p).strip(), 0
+
+    lo, hi = 0, len(ordered_aliases)
+    best_mid = 0
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        names = ("Codes: " + sep.join(ordered_aliases[:mid]) + ".") if mid else ""
+        full = " ".join(p for p in (head, names, tail) if p).strip()
+        if _prompt_token_count(full, tokenizer) <= budget:
+            best_mid = mid
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    names = ("Codes: " + sep.join(ordered_aliases[:best_mid]) + ".") if best_mid else ""
+    return " ".join(p for p in (head, names, tail) if p).strip(), best_mid
+
+
 def build_enhanced_initial_prompt(
     base: str | None = None,
     known_staff: list[str] | None = None,
     common_words: list[str] | None = None,
     extra_context: str | None = None,
+    max_tokens: int | None = None,
+    use_codebook: bool | None = None,
 ) -> str:
-    """Build a Whisper initial_prompt that includes a 'fingerprint' of the school radio environment.
+    """Build a Whisper initial_prompt fingerprint that **fits the ~223-token budget**.
 
-    This helps the model with domain terms, staff names (for better recognition of roles),
-    and common broadcast vocabulary (e.g. "chromebook", "test monitoring", building numbers,
-    exam logistics phrases, etc.).
+    Prefer a short **radio-user** list (``radio_staff.txt``) as ``known_staff`` so we
+    can ship readable Title+Last names without phonetic codes. Full ``staff_names.txt``
+    should still drive IncidentTracker / enrollment resolve separately.
 
-    Used by record_with_transcribe.py (and can be used in test scripts) when the user
-    provides lists of teaching staff full names and/or most common radio words.
+    Packing order:
+      1. Short base + compact channel terms
+      2. Staff names — Title+Last if they fit; else phonetic codebook aliases
+      3. Hot call signs + gold protocol phrases at the **end**
     """
-    base = base or (
-        "School administrative radio traffic, logistics, dismissals, hallway movement, "
-        "staff roles (Mr, Mrs, Coach, Nurse, Officer, etc.):"
-    )
-    parts = [base.strip()]
+    budget = max_tokens if max_tokens is not None else _DEFAULT_PROMPT_TOKEN_BUDGET
+    base = (base or "School radio.").strip()
 
-    if known_staff:
-        # Limit to avoid making prompt too long; Whisper prompt is best when concise but specific.
-        staff_list = ", ".join(sorted(set(known_staff))[:25])
-        parts.append(f"Known staff and roles include: {staff_list}.")
+    clean_staff = [
+        n for n in (known_staff or [])
+        if n and n.strip() and not n.strip().startswith("#")
+    ]
+    title_last = sorted({_staff_title_last(n) for n in clean_staff})
+    last_names = sorted({_staff_last_name(n) for n in clean_staff if _staff_last_name(n)})
+    hot = [
+        t for t in title_last
+        if any(key in t.lower() for key in _HOT_LAST_KEYS)
+    ]
+    hot_lasts = sorted({t.split()[-1] for t in hot})
 
-    if common_words:
-        vocab = ", ".join(sorted(set(w.lower() for w in common_words if w.strip()))[:40])
-        parts.append(f"Frequent terms on this channel: {vocab}.")
+    # Merge priority + user terms; keep unique, short list.
+    term_set: list[str] = []
+    for w in list(_PRIORITY_TERMS) + list(common_words or []):
+        wl = w.lower().strip()
+        if wl and wl not in term_set:
+            term_set.append(wl)
+    # Keep terms short so a full radio-carrier Title+Last roster can fit ≤223 tokens.
+    terms = term_set[:10]
 
+    head_parts = [base]
+    if terms:
+        head_parts.append("Terms: " + ", ".join(terms) + ".")
     if extra_context:
-        parts.append(extra_context.strip())
+        head_parts.append(extra_context.strip())
+    head = " ".join(head_parts)
 
-    return " ".join(p for p in parts if p).strip()
+    phrases_tail = (
+        "Phrases: Yannett to Mayes, Go for Mayes, Go for Coach Richar, go ahead, 10-4."
+    )
+
+    tokenizer = None
+    try:
+        from edupulse.whisper_prompt_budget import get_whisper_tokenizer
+
+        tokenizer = get_whisper_tokenizer()
+    except Exception:
+        tokenizer = None
+
+    # Prefer readable Title+Last when the radio roster is small enough to fit.
+    hot_tl = [t for t in title_last if t.split()[-1] in set(hot_lasts)]
+    rest_tl = [t for t in title_last if t not in set(hot_tl)]
+    ordered_title_last = hot_tl + rest_tl
+
+    # Title+Last path: skip duplicate Call: block (names already in Codes) to save budget.
+    trial_full, n_packed = _pack_name_aliases(
+        ordered_title_last, head, phrases_tail, budget, tokenizer=tokenizer, sep=", "
+    )
+
+    need_codebook = use_codebook
+    if need_codebook is None:
+        # Auto: codebook only if we cannot fit most Title+Last names
+        need_codebook = bool(clean_staff) and (
+            not title_last or n_packed < max(1, int(0.85 * len(title_last)))
+        )
+
+    if need_codebook and clean_staff:
+        from edupulse.name_codebook import build_name_codebook, set_active_codebook
+
+        codebook = build_name_codebook(clean_staff, tokenizer=tokenizer)
+        set_active_codebook(codebook)
+        ordered = codebook.prompt_aliases(hot_lasts=hot_lasts)
+        try:
+            from pathlib import Path
+
+            codebook.save(Path.home() / "edupulse" / "name_codebook.json")
+        except Exception:
+            pass
+        # Codebook path: keep Call: with full Title+Last hot names (codes are abbreviated).
+        call_tail = ""
+        if hot:
+            call_tail = "Call: " + ", ".join(hot) + ". "
+        tail = call_tail + phrases_tail
+        prompt, _n = _pack_name_aliases(
+            ordered, head, tail, budget, tokenizer=tokenizer, sep=" "
+        )
+    else:
+        # Still activate codebook decode (hand aliases) for expand/resolve
+        if clean_staff:
+            try:
+                from edupulse.name_codebook import build_name_codebook, set_active_codebook
+
+                set_active_codebook(build_name_codebook(clean_staff, tokenizer=None))
+            except Exception:
+                pass
+        prompt = trial_full
+
+    # Final safety: never ship over budget (exact fit when tokenizer works).
+    if tokenizer is not None:
+        from edupulse.whisper_prompt_budget import fit_prompt_to_budget
+
+        prompt = fit_prompt_to_budget(prompt, budget=budget, tokenizer=tokenizer)
+    else:
+        while _prompt_token_count(prompt) > budget and "Codes:" in prompt:
+            before, after = prompt.split("Codes:", 1)
+            names_part, rest = after.split(".", 1)
+            # Drop last comma-separated entry (Title+Last) or space token
+            if ", " in names_part:
+                bits = [b.strip() for b in names_part.split(",") if b.strip()]
+                sep = ", "
+            else:
+                bits = names_part.strip().split()
+                sep = " "
+            if len(bits) <= 1:
+                prompt = (before + rest).strip()
+                break
+            prompt = (before + "Codes: " + sep.join(bits[:-1]) + "." + rest).strip()
+
+    return prompt.strip()
 

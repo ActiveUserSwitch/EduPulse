@@ -14,7 +14,7 @@ class VadConfig:
     speech_threshold_db: float = -32.0
     silence_timeout: float = 0.8
     tail_padding_sec: float = 0.4
-    pre_roll_sec: float = 0.25
+    pre_roll_sec: float = 1.25
     min_speech_sec: float = 0.3
     max_segment_sec: float = 30.0
     sample_rate: int = 16000
@@ -85,7 +85,9 @@ class EnergyVAD:
         if is_speech:
             if not self.is_speaking:
                 self.is_speaking = True
-                self.audio_buffer = self.pre_buffer[:] + [audio.copy()]
+                # pre_buffer already includes this frame's `audio` — do not append again
+                # (duplicate ~64ms block sounded like a skip/jitter on first syllable).
+                self.audio_buffer = self.pre_buffer[:]
                 self.segment_start_time = now
                 self.silence_start = None
                 self.segment_done_time = None

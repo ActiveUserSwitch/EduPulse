@@ -317,7 +317,8 @@ class SpeakerDatabase:
                 self.embedder = SpeakerEmbedder(hf_token=discovered)
             except Exception:
                 self.embedder = None  # vector-only mode; searches on pre-cached embeddings still work
-        self._db: dict[str, list["np.ndarray"]] = {}   # name -> list of embeddings
+        self._db: dict[str, list["np.ndarray"]] = {}  # name -> embeddings
+        self._weights: dict[str, list[float]] = {}  # parallel trust weights (gold > sequential)
 
     def is_available(self) -> bool:
         # Available for *search / identification* if we have any enrolled vectors,
@@ -331,70 +332,149 @@ class SpeakerDatabase:
                 return False
         return False
 
-    def enroll(self, name: str, audio_path: str) -> bool:
-        """Add one enrollment embedding for a known speaker."""
+    # Cap vectors per person so the DB stays lean under continual reinforcement
+    MAX_EMBEDDINGS_PER_SPEAKER = 24
+
+    # Enrollment trust weights.
+    # NOTE: We do NOT auto-enroll "next TX after a call" into the voice DB by default.
+    # Field observation: Person2 often is NOT the next voice (other traffic jumps in).
+    # Gold standard remains: Name1→Name2, then explicit "Go for Name2" / "This is Name2".
+    WEIGHT_GOLD_ANSWER = 1.0      # prior TX called Name2; this TX is "Go for Name2"
+    WEIGHT_SELF_ID = 0.95           # "Go for X" / "This is X" without prior context
+    WEIGHT_CALLER_PROTOCOL = 0.75   # "Name1 to Name2" → Name1 speaking
+    WEIGHT_SEQUENTIAL_ANSWER = 0.40  # only if explicitly enabled (see enroll_sequential)
+
+    def enroll(self, name: str, audio_path: str, weight: float = 1.0) -> bool:
+        """Add one enrollment embedding for a known speaker (weighted trust)."""
+        if self.embedder is None or not self.embedder.is_available():
+            return False
         emb = self.embedder.embed(audio_path)
         if emb is None:
             return False
-        self._db.setdefault(name, []).append(emb)
+        lst = self._db.setdefault(name, [])
+        wlst = self._weights.setdefault(name, [])
+        lst.append(emb)
+        wlst.append(float(weight))
+        if len(lst) > self.MAX_EMBEDDINGS_PER_SPEAKER:
+            self._db[name] = lst[-self.MAX_EMBEDDINGS_PER_SPEAKER :]
+            self._weights[name] = wlst[-self.MAX_EMBEDDINGS_PER_SPEAKER :]
         return True
 
-    def mine_and_enroll(self, wav_path: str, transcript: str, known_staff: list[str]) -> list[str]:
-        """Conservative enrollment using *strong self-identification only*.
+    def mine_and_enroll(
+        self,
+        wav_path: str,
+        transcript: str,
+        known_staff: list[str],
+        *,
+        pending_callee: str | None = None,
+        enroll_sequential: bool = False,
+    ) -> list[str]:
+        """Enroll from radio protocol + strong self-ID.
 
-        In this radio environment, people usually say the *other person's* name
-        ("Dr. Strickland, can you come...?"). The speaker is often the caller,
-        not the person named.
+        Gold: prior pending_callee matches this TX's "Go for Name2" / "This is Name2".
+        Sequential "next voice = callee" is OFF by default — too many counterexamples
+        in live traffic (other people key up first). Pass enroll_sequential=True only
+        for experiments.
 
-        We only treat a clip as a high-confidence enrollment example when the
-        transcript contains a clear self-reference by the speaker:
-          - "Go for X", "This is X", "X here", "Yeah, Strickland."
-
-        General name mentions are *not* used for blind enrollment anymore.
-
-        Returns the list of names we felt safe enrolling from this clip (0 or 1).
+        Returns names successfully enrolled from this clip.
         """
-        if not transcript or not known_staff:
+        if not known_staff:
             return []
 
+        enrolled: list[str] = []
         try:
-            from edupulse.analysis import infer_likely_speaker
+            from edupulse.semantic_map import is_generic_radio_ack, parse_radio_call
 
-            name, conf = infer_likely_speaker(transcript, known_staff)
-            if name and conf == "strong":
-                if self.enroll(name, wav_path):
-                    return [name]
+            parsed = parse_radio_call(transcript or "", known_staff)
+            plan: list[tuple[str, float, str]] = []  # name, weight, reason
+
+            self_id = parsed.get("self_id")
+            if self_id and pending_callee and self_id == pending_callee:
+                plan.append((self_id, self.WEIGHT_GOLD_ANSWER, "gold_answer"))
+            elif self_id:
+                plan.append((self_id, self.WEIGHT_SELF_ID, "self_id"))
+
+            for e in parsed.get("enrollments") or []:
+                n = e.get("name")
+                reason = e.get("reason") or "caller_protocol"
+                if not n or n == self_id:
+                    continue
+                if reason == "caller_protocol":
+                    plan.append((n, float(e.get("weight") or self.WEIGHT_CALLER_PROTOCOL), reason))
+
+            # Optional / experimental only — do not use for production DB by default
+            if enroll_sequential and pending_callee and not any(n == pending_callee for n, _, _ in plan):
+                if self_id and self_id != pending_callee:
+                    pass
+                elif is_generic_radio_ack(transcript or "") or not (transcript or "").strip():
+                    plan.append(
+                        (pending_callee, self.WEIGHT_SEQUENTIAL_ANSWER, "sequential_answer")
+                    )
+
+            seen: set[str] = set()
+            for name, weight, _reason in plan:
+                if name in seen:
+                    continue
+                seen.add(name)
+                if self.enroll(name, wav_path, weight=weight):
+                    enrolled.append(name)
         except Exception:
             pass
 
-        return []
+        return enrolled
 
-    def identify(self, audio_path: str, threshold: float = 0.65) -> tuple[str | None, float]:
-        """Return (best_matching_name, cosine_similarity) or (None, score) if below threshold."""
-        if not self._db or not self.embedder.is_available():
-            return None, 0.0
-
+    def rank_speakers(self, audio_path: str) -> list[tuple[str, float, int]]:
+        """Return [(name, weighted_cosine, n_enrollments), ...] best first."""
+        if not self._db or self.embedder is None or not self.embedder.is_available() or np is None:
+            return []
         emb = self.embedder.embed(audio_path)
         if emb is None:
-            return None, 0.0
-
-        best_name: str | None = None
-        best_score = -1.0
-
+            return []
+        ranked: list[tuple[str, float, int]] = []
         for name, embs in self._db.items():
+            weights = self._weights.get(name) or [1.0] * len(embs)
+            if len(weights) != len(embs):
+                weights = [1.0] * len(embs)
             scores = []
-            for e in embs:
+            wsum = 0.0
+            for e, w in zip(embs, weights):
                 denom = (np.linalg.norm(emb) * np.linalg.norm(e)) + 1e-8
-                scores.append(float(np.dot(emb, e) / denom))
-            if scores:
-                score = float(np.mean(scores))
-                if score > best_score:
-                    best_score = score
-                    best_name = name
+                scores.append(float(np.dot(emb, e) / denom) * float(w))
+                wsum += float(w)
+            if scores and wsum > 0:
+                ranked.append((name, float(sum(scores) / wsum), len(embs)))
+        ranked.sort(key=lambda x: x[1], reverse=True)
+        return ranked
 
-        if best_score >= threshold and best_name is not None:
-            return best_name, best_score
-        return None, best_score
+    def identify(
+        self,
+        audio_path: str,
+        threshold: float = 0.60,
+        *,
+        min_enrollments: int = 3,
+        min_margin: float = 0.06,
+    ) -> tuple[str | None, float]:
+        """Return (best_matching_name, score) if confident enough, else (None, best_score).
+
+        Prefer miss ("?") over a wrong name. Short PTT + thin profiles mis-ID often.
+        Confident voice ID requires:
+          - score >= threshold (default 0.60)
+          - at least min_enrollments samples (default 3) when multiple profiles exist
+          - margin over 2nd place (default 0.06)
+        """
+        ranked = self.rank_speakers(audio_path)
+        if not ranked:
+            return None, 0.0
+        best_name, best_score, n_enroll = ranked[0]
+        second = ranked[1][1] if len(ranked) > 1 else -1.0
+        margin = best_score - second if second >= 0 else 1.0
+        if best_score < threshold:
+            return None, best_score
+        if n_enroll < min_enrollments and len(self._db) > 1:
+            return None, best_score
+        if len(ranked) > 1 and margin < min_margin:
+            return None, best_score
+        return best_name, best_score
 
     def known_speakers(self) -> list[str]:
         return sorted(self._db.keys())
@@ -436,16 +516,22 @@ class SpeakerDatabase:
             return False
 
         self._db.setdefault(name, []).append(emb)
+        self._weights.setdefault(name, []).append(1.0)
         return True
 
     def mean_embedding_for(self, name: str) -> Optional["np.ndarray"]:
-        """Return the mean voice profile for a speaker (or None)."""
+        """Return the (weighted) mean voice profile for a speaker (or None)."""
         vecs = self._db.get(name)
         if not vecs:
             return None
+        weights = self._weights.get(name) or [1.0] * len(vecs)
+        if len(weights) != len(vecs):
+            weights = [1.0] * len(vecs)
         if len(vecs) == 1:
             return np.asarray(vecs[0]).squeeze().astype(float)
-        return np.mean([np.asarray(v).squeeze() for v in vecs], axis=0).astype(float)
+        arr = np.stack([np.asarray(v).squeeze() for v in vecs], axis=0)
+        w = np.asarray(weights, dtype=float).reshape(-1, 1)
+        return (arr * w).sum(axis=0) / (w.sum() + 1e-8)
 
     def find_similar(
         self,
@@ -513,11 +599,12 @@ class SpeakerDatabase:
         return scored[:top_k]
 
     def save_session(self, path: str = "/tmp/edupulse_speaker_db_session.pkl") -> None:
-        """Persist the current enrollments (names + all raw vectors) to a pickle."""
+        """Persist the current enrollments (names + vectors + trust weights) to a pickle."""
         try:
             payload = {
                 "speakers": self.known_speakers(),
                 "embeddings": {n: [np.asarray(e) for e in lst] for n, lst in self._db.items()},
+                "weights": {n: list(self._weights.get(n) or [1.0] * len(lst)) for n, lst in self._db.items()},
             }
             with open(path, "wb") as f:
                 pickle.dump(payload, f)
@@ -544,6 +631,10 @@ class SpeakerDatabase:
             db = cls.__new__(cls)
             db.embedder = None
             db._db = {}
+            db._weights = {}
+
+        if not hasattr(db, "_weights") or db._weights is None:
+            db._weights = {}
 
         if not os.path.isfile(path):
             return db
@@ -552,17 +643,22 @@ class SpeakerDatabase:
             with open(path, "rb") as f:
                 payload = pickle.load(f)
             embs = payload.get("embeddings", {})
+            weights = payload.get("weights", {})
             for name, vecs in embs.items():
                 if isinstance(vecs, list):
                     for v in vecs:
                         db._db.setdefault(name, []).append(np.asarray(v))
                 else:
                     db._db.setdefault(name, []).append(np.asarray(vecs))
+                w = weights.get(name)
+                if isinstance(w, list) and len(w) == len(db._db[name]):
+                    db._weights[name] = [float(x) for x in w]
+                else:
+                    db._weights[name] = [1.0] * len(db._db[name])
             return db
         except Exception as e:
             warnings.warn(f"[edupulse.speaker] Could not load session {path}: {e}")
             return db if db is not None else None
-
 
 def get_speaker_diarizer(hf_token: str | None = None) -> SpeakerDiarizer | None:
     """Factory that returns a diarizer or None if pyannote is not usable."""
@@ -574,14 +670,210 @@ def get_speaker_diarizer(hf_token: str | None = None) -> SpeakerDiarizer | None:
         return None
 
 
+def default_speaker_db_path() -> Path:
+    """Persistent voice DB under the live data root (not in git)."""
+    return Path.home() / "edupulse" / "speaker_db.pkl"
+
+
 def get_speaker_database(known_staff: list[str] | None = None, hf_token: str | None = None) -> SpeakerDatabase | None:
     """Factory that returns a database or None if embeddings are not available."""
     try:
         discovered = _discover_hf_token(hf_token)
         db = SpeakerDatabase(hf_token=discovered)
-        return db if db.is_available() else None
+        # Need a live embedder to enroll/identify new WAVs
+        if db.embedder is None or not db.embedder.is_available():
+            return None
+        return db
     except Exception:
         return None
+
+
+def get_persistent_speaker_database(
+    hf_token: str | None = None,
+    path: str | Path | None = None,
+) -> SpeakerDatabase | None:
+    """Load-or-create the on-disk speaker DB used for continual reinforcement."""
+    db_path = Path(path) if path else default_speaker_db_path()
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    discovered = _discover_hf_token(hf_token)
+    db = SpeakerDatabase.load_session(str(db_path), hf_token=discovered)
+    if db is None:
+        return None
+    # Must be able to embed new clips
+    if db.embedder is None or not db.embedder.is_available():
+        return None
+    return db
+
+
+def process_transmission_speaker(
+    wav_path: str,
+    transcript: str,
+    known_staff: list[str] | None = None,
+    *,
+    db: SpeakerDatabase | None = None,
+    db_path: str | Path | None = None,
+    identify_threshold: float = 0.60,
+    persist: bool = True,
+    hf_token: str | None = None,
+    pending_callee: str | None = None,
+    enroll_sequential: bool = False,
+) -> dict[str, Any]:
+    """One-tx speaker pipeline: parse → enroll (weighted) → identify → next pending.
+
+    Enrollment (voice DB):
+      - Gold: pending Name2 + this TX "Go for Name2" / "This is Name2"
+      - Self-ID / caller protocol as before
+      - Sequential next-TX enroll is OFF unless enroll_sequential=True
+        (live radio often has other people key up before the callee)
+    """
+    from edupulse.semantic_map import parse_radio_call
+
+    staff = known_staff or []
+    parsed = parse_radio_call(transcript or "", staff)
+    result: dict[str, Any] = {
+        "likely_speaker": parsed.get("likely_speaker"),
+        "likely_speaker_conf": parsed.get("likely_speaker_conf") or "none",
+        "caller": parsed.get("caller"),
+        "callee": parsed.get("callee"),
+        "addressed": parsed.get("addressed"),
+        "self_id": parsed.get("self_id"),
+        "pending_callee_in": pending_callee,
+        "pending_callee_out": None,
+        "primary_speaker": None,
+        "speaker_conf": 0.0,
+        "speaker_source": None,  # "voice" | "protocol" | "text" | "room" | None
+        "enrolled": [],
+        "known_speakers_n": 0,
+        "voice_available": False,
+        "is_generic_ack": bool(parsed.get("is_generic_ack")),
+        "room_hint": None,
+        "room_id": None,
+    }
+
+    # Soft room→teacher hint (phone pickup / admin call mentioning a room)
+    if not result.get("likely_speaker"):
+        try:
+            from edupulse.rooms import infer_speaker_from_room
+
+            room_teacher, room_id = infer_speaker_from_room(transcript or "")
+            if room_teacher:
+                result["likely_speaker"] = room_teacher
+                result["likely_speaker_conf"] = "room"
+                result["room_hint"] = room_teacher
+                result["room_id"] = room_id
+        except Exception:
+            pass
+
+    path = Path(db_path) if db_path else default_speaker_db_path()
+    if db is None:
+        db = get_persistent_speaker_database(hf_token=hf_token, path=path)
+
+    if pending_callee and parsed.get("self_id") == pending_callee:
+        result["likely_speaker"] = pending_callee
+        result["likely_speaker_conf"] = "gold"  # Name1→Name2 then Go for Name2
+
+    if db is not None and db.embedder is not None and db.embedder.is_available():
+        result["voice_available"] = True
+        enrolled = db.mine_and_enroll(
+            wav_path,
+            transcript or "",
+            staff,
+            pending_callee=pending_callee,
+            enroll_sequential=enroll_sequential,
+        )
+        result["enrolled"] = enrolled
+        result["known_speakers_n"] = len(db.known_speakers())
+
+        ranked = db.rank_speakers(wav_path)
+        best_name, best_score, best_n = (ranked[0] if ranked else (None, 0.0, 0))
+        second_score = ranked[1][1] if len(ranked) > 1 else None
+        result["speaker_best"] = best_name
+        result["speaker_best_score"] = round(float(best_score), 3) if best_name else 0.0
+        result["speaker_best_n"] = int(best_n)
+        result["speaker_second_score"] = (
+            round(float(second_score), 3) if second_score is not None else None
+        )
+
+        name, conf = db.identify(wav_path, threshold=identify_threshold)
+        if name:
+            result["primary_speaker"] = name
+            result["speaker_conf"] = round(float(conf), 3)
+            result["speaker_source"] = "voice"
+            result["speaker_tentative"] = False
+        elif result.get("likely_speaker") and result.get("likely_speaker_conf") in (
+            "gold",
+            "strong",
+            "protocol",
+            "room",
+        ):
+            # Text/protocol/room when it names the *speaker* (caller / self-ID / room teacher)
+            result["primary_speaker"] = result["likely_speaker"]
+            soft = {
+                "gold": 0.92,
+                "strong": 0.85,
+                "protocol": 0.7,
+                "room": 0.65,
+            }.get(result.get("likely_speaker_conf") or "none", 0.0)
+            result["speaker_conf"] = soft
+            result["speaker_source"] = (
+                "room"
+                if result.get("likely_speaker_conf") == "room"
+                else (
+                    "protocol"
+                    if result.get("likely_speaker_conf") in ("protocol", "gold")
+                    else "text"
+                )
+            )
+            result["speaker_tentative"] = False
+        elif (
+            best_name
+            and best_n >= 2
+            and best_score >= 0.50
+            and (second_score is None or (best_score - float(second_score)) >= 0.05)
+        ):
+            # Soft display hint only — NOT written as a hard primary for training consumers
+            # (primary_speaker stays None; UI can use speaker_best + tentative flag)
+            result["primary_speaker"] = None
+            result["speaker_conf"] = round(float(best_score), 3)
+            result["speaker_source"] = "voice_tentative"
+            result["speaker_tentative"] = True
+        else:
+            result["primary_speaker"] = None
+            result["speaker_tentative"] = False
+
+        if persist:
+            try:
+                db.save_session(str(path))
+            except Exception:
+                pass
+    else:
+        if result.get("likely_speaker") and result.get("likely_speaker_conf") in (
+            "gold",
+            "strong",
+            "protocol",
+        ):
+            result["primary_speaker"] = result["likely_speaker"]
+            soft = {
+                "gold": 0.92,
+                "strong": 0.85,
+                "protocol": 0.7,
+            }.get(result.get("likely_speaker_conf") or "none", 0.0)
+            result["speaker_conf"] = soft
+            result["speaker_source"] = (
+                "protocol"
+                if result.get("likely_speaker_conf") in ("protocol", "gold")
+                else "text"
+            )
+            result["speaker_tentative"] = False
+
+    # Keep pending only to detect gold "Go for Name2" on the next TX.
+    # Do not assume the next voice is Name2 for enrollment.
+    if parsed.get("expect_next_speaker"):
+        result["pending_callee_out"] = parsed["expect_next_speaker"]
+    else:
+        result["pending_callee_out"] = None
+
+    return result
 
 
 # Convenience helper that downstream code (test scripts, future recorder worker)
@@ -598,22 +890,16 @@ def enrich_with_speaker(
     This is the main "public" entry point for the rest of the system.
     It is safe to call even if pyannote is missing (returns mostly empty data).
     """
-    result: dict[str, Any] = {
-        "primary_speaker": None,
-        "speaker_conf": 0.0,
-        "speaker_segments": [],
-    }
+    result = process_transmission_speaker(
+        wav_path,
+        transcript,
+        known_staff,
+        hf_token=hf_token,
+        persist=True,
+    )
+    result.setdefault("speaker_segments", [])
 
     discovered = _discover_hf_token(hf_token)
-    db = get_speaker_database(known_staff=known_staff, hf_token=discovered)
-    if db is not None:
-        # Try to mine the current clip itself (very weak but useful bootstrap)
-        db.mine_and_enroll(wav_path, transcript, known_staff or [])
-        name, conf = db.identify(wav_path)
-        if name:
-            result["primary_speaker"] = name
-            result["speaker_conf"] = round(conf, 3)
-
     if diarize:
         diar = get_speaker_diarizer(hf_token=discovered)
         if diar is not None:

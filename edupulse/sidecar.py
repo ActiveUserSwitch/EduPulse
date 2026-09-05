@@ -25,6 +25,9 @@ class TransmissionSidecar(TypedDict, total=False):
     channels: int
     model: str
     transcription: str
+    transcription_raw: NotRequired[str | None]  # pre-codebook-expand ASR text (methods)
+    transcription_whisper: NotRequired[str | None]  # pre-LLM-repair snapshot
+    transcription_repair: NotRequired[dict[str, Any]]  # LLM repair audit blob
     whisper_conf: float | None
     category: str
     cat_conf: float
@@ -33,7 +36,14 @@ class TransmissionSidecar(TypedDict, total=False):
     students: list[str]
     roles: list[str]
     is_noise: bool
-    # Optional acoustic / speaker enrichment
+    # Text / radio-protocol speaker guess
+    likely_speaker: str | None
+    likely_speaker_conf: str | None  # "strong" | "protocol" | "weak" | "none"
+    radio_caller: str | None
+    radio_callee: str | None
+    speaker_source: str | None  # "voice" | "protocol" | "text"
+    speaker_enrolled: list[str] | None
+    # Optional acoustic / speaker enrichment (pyannote embeddings)
     acoustic_features: dict[str, Any]
     primary_speaker: str | None
     speaker_conf: float | None
@@ -61,6 +71,8 @@ class ManifestEntry(TypedDict, total=False):
     students: list[str]
     roles: list[str]
     is_noise: bool
+    likely_speaker: str | None
+    likely_speaker_conf: str | None
 
 
 def build_sidecar(

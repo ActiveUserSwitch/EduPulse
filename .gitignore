@@ -42,10 +42,18 @@ edupulse-data/
 # ---------------------------------------------------------------------------
 hardware/capture/staff_names.txt
 hardware/capture/common_words.txt
+hardware/capture/room_assignments.txt
+hardware/capture/radio_staff.txt
+hardware/capture/radio_staff.machine-draft-*.txt
+hardware/capture/Who_has_a_radio.docx
 **/staff_names.txt
 **/common_words.txt
+**/room_assignments.txt
+**/radio_staff.txt
 !hardware/capture/staff_names.example.txt
 !hardware/capture/common_words.example.txt
+!hardware/capture/room_assignments.example.txt
+!hardware/capture/radio_staff.example.txt
 
 # ---------------------------------------------------------------------------
 # Secrets / tokens

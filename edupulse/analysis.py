@@ -30,6 +30,7 @@ from .information_score import (  # noqa: F401
 from .semantic_map import (  # noqa: F401
     build_radio_semantic_map,
     infer_likely_speaker,
+    parse_radio_call,
 )
 
 __all__ = [
@@ -47,6 +48,7 @@ __all__ = [
     "default_tracker",
     "extract_staff_mentions",
     "infer_likely_speaker",
+    "parse_radio_call",
     "is_likely_noise",
     "load_hand_coded_onward_corpus",
     "RunningNormalBaseline",

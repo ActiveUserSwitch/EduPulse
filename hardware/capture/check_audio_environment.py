@@ -3,7 +3,7 @@
 EduPulse cross-platform environment checker (primary diagnostics tool).
 
 **Preferred** over check_pi_environment.py for all current work.
-Primary live capture host: Windows work PC (WASAPI).
+Hosts: Linux lab (ALSA/Pulse via sounddevice) or Windows work PC (WASAPI).
 
 Reports:
   - OS / Python

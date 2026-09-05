@@ -3,12 +3,12 @@
 This document describes the physical connections for **Option A** (minimal control
 via physical knobs only).
 
-**Primary host (current plan):** Windows work PC (WASAPI via `sounddevice`).  
+**Hosts:** Linux lab (`LINUX_QUICKSTART.md`) or Windows work PC (`WINDOWS_QUICKSTART.md`).  
 **Optional / historical:** Raspberry Pi 4 + ALSA — see notes at the end.
 
 ## Hardware
 
-- **Host PC** (Windows work station preferred; Linux laptop OK)
+- **Host PC** (Linux lab or Windows work station)
 - Cobra PX650 radio (2.5mm accessory / headset jack on the side or back)
 - 2.5mm TRS male → dual RCA male cable (confirmed correct cable)
 - Behringer UCA222 USB audio interface
@@ -29,12 +29,13 @@ via physical knobs only).
      consistent is nice. With the 2.5mm cable on this radio, typically **only one
      channel** will carry strong audio.
 
-3. **UCA222 → host PC (primary: Windows)**
-   - Plug the UCA222's USB cable into the work PC (or laptop).
-   - Windows: set the device as input or pass `--device N` from
-     `check_audio_environment.py --list-devices` / `record_with_transcribe.py --list-devices`.
-   - If open fails: Sound → device → Properties → Advanced → uncheck exclusive mode.
-   - See `hardware/capture/WINDOWS_QUICKSTART.md`.
+3. **UCA222 → host PC**
+   - Plug the UCA222's USB cable into the Linux lab or Windows work PC.
+   - Pass `--device N` from `check_audio_environment.py --list-devices` /
+     `record_with_transcribe.py --list-devices`.
+   - Linux: `hardware/capture/LINUX_QUICKSTART.md`.
+   - Windows: if open fails, Sound → device → Properties → Advanced → uncheck exclusive mode.
+     See `hardware/capture/WINDOWS_QUICKSTART.md`.
 
 4. **Knob Philosophy (Option A)**
    - Primary level control: the volume knob on the Cobra PX650 itself.
@@ -47,7 +48,7 @@ via physical knobs only).
 
 ## First Power-Up Checklist
 
-- [ ] Host PC ready (Windows preferred).
+- [ ] Host PC ready (Linux lab or Windows).
 - [ ] UCA222 plugged into USB.
 - [ ] 2.5mm seated fully in the PX650.
 - [ ] RCA plugs fully seated in UCA222 Line In.
@@ -104,7 +105,8 @@ If you deliberately deploy on a Pi (not the primary plan):
 
 ## References
 
-- **Primary:** `hardware/capture/WINDOWS_QUICKSTART.md`
+- Linux: `hardware/capture/LINUX_QUICKSTART.md`
+- Windows: `hardware/capture/WINDOWS_QUICKSTART.md`
 - `hardware/capture/check_audio_environment.py`
 - Historical Pi: `DAY1_UCA222_CHECKLIST.md`, `QUICKSTART_ALREADY_RUNNING_PI.md`
 - Session archive: `SESSION_SUMMARY_2025-05-27.md`

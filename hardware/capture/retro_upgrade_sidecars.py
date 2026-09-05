@@ -69,14 +69,71 @@ def get_wav_duration(wav: Path) -> float:
         m = re.search(r"_([\d.]+)s\.wav$", wav.name)
         return float(m.group(1)) if m else 0.0
 
+_WHISPER_MODEL = None
+
+
+def get_large_v3_model():
+    """Load large-v3 once (CUDA when available). Reloading per file is extremely slow."""
+    global _WHISPER_MODEL
+    if _WHISPER_MODEL is not None:
+        return _WHISPER_MODEL
+    try:
+        from faster_whisper import WhisperModel
+    except ImportError as e:
+        raise RuntimeError(f"faster-whisper not available in this env: {e}") from e
+
+    # Prefer CPU by default — this machine's torch often reports CUDA but lacks libcublas.
+    # Set EDUPULSE_WHISPER_DEVICE=cuda to try GPU first.
+    import os
+
+    import numpy as np
+
+    prefer = os.environ.get("EDUPULSE_WHISPER_DEVICE", "cpu").strip().lower()
+    candidates: list[tuple[str, str]] = []
+    if prefer == "cuda":
+        candidates.append(("cuda", "float16"))
+        candidates.append(("cpu", "int8"))
+    elif prefer == "cpu":
+        candidates.append(("cpu", "int8"))
+    else:
+        candidates.append(("cpu", "int8"))
+        try:
+            import torch
+
+            if torch.cuda.is_available():
+                candidates.insert(0, ("cuda", "float16"))
+        except Exception:
+            pass
+
+    last_err: Exception | None = None
+    for device, compute in candidates:
+        try:
+            print(f"[whisper] loading large-v3 device={device} compute_type={compute} …", flush=True)
+            model = WhisperModel("large-v3", device=device, compute_type=compute)
+            # Probe inference so broken CUDA (missing libcublas) fails here, not mid-batch.
+            _ = list(
+                model.transcribe(
+                    np.zeros(16000, dtype=np.float32),
+                    language="en",
+                    vad_filter=False,
+                )
+            )
+            _WHISPER_MODEL = model
+            print("[whisper] ready", flush=True)
+            return _WHISPER_MODEL
+        except Exception as e:
+            last_err = e
+            print(f"[whisper] {device} failed ({e}); trying next …", flush=True)
+    raise RuntimeError(f"Could not load large-v3: {last_err}")
+
+
 def transcribe_large_v3(wav_path: Path, staff_names: list[str], common_words: list[str]) -> tuple[str, float]:
     """Perform the heavy transcription exactly like the project's test + recorder path."""
     try:
-        from faster_whisper import WhisperModel
         import soundfile as sf
         import numpy as np
     except ImportError as e:
-        raise RuntimeError(f"faster-whisper / soundfile not available in this env: {e}")
+        raise RuntimeError(f"soundfile / numpy not available in this env: {e}") from e
 
     effective_prompt = build_enhanced_initial_prompt(base=None, known_staff=staff_names, common_words=common_words)
 
@@ -90,7 +147,7 @@ def transcribe_large_v3(wav_path: Path, staff_names: list[str], common_words: li
     if peak > 1e-6:
         audio = audio / peak
 
-    model = WhisperModel("large-v3", device="cpu", compute_type="int8")
+    model = get_large_v3_model()
 
     segments, info = model.transcribe(
         audio,
@@ -126,14 +183,18 @@ def main():
     args = ap.parse_args()
 
     base = Path(args.base_dir).expanduser().resolve()
-    project = Path(__file__).resolve().parent.parent
 
-    # Hardcoded for this environment (GrokBuild tree); the script will also work if run from project root with correct relative.
-    staff_path = Path("/home/joseph/Documents/GrokBuild/hardware/capture/staff_names.txt")
-    common_path = Path("/home/joseph/Documents/GrokBuild/hardware/capture/common_words.txt")
+    # Prefer repo fingerprints; fall back to home copies if present.
+    project = Path(__file__).resolve().parents[2]  # EduPulse/
+    staff_path = project / "hardware" / "capture" / "staff_names.txt"
+    common_path = project / "hardware" / "capture" / "common_words.txt"
+    if not staff_path.exists():
+        staff_path = Path.home() / "Documents" / "GrokBuild" / "EduPulse" / "hardware" / "capture" / "staff_names.txt"
+    if not common_path.exists():
+        common_path = Path.home() / "Documents" / "GrokBuild" / "EduPulse" / "hardware" / "capture" / "common_words.txt"
     staff_names = load_non_comment_lines(staff_path)
     common_words = load_non_comment_lines(common_path)
-    print(f"[fingerprints] staff={len(staff_names)} common={len(common_words)}")
+    print(f"[fingerprints] staff={len(staff_names)} common={len(common_words)} ({staff_path})")
 
     # Discover day dirs
     day_dirs = []

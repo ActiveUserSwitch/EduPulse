@@ -1,7 +1,9 @@
 # EduPulse on Windows — Quick Start
 
-Run capture + offline analysis on a **Windows work PC** (primary live station)
-with the same artifacts as any Linux host.
+Run capture + offline analysis on a **Windows work PC** (school live station)
+with the same artifacts as the Linux lab.
+
+Linux lab: [`LINUX_QUICKSTART.md`](LINUX_QUICKSTART.md).
 
 Full design notes: [`WINDOWS_PORT_PLAN.md`](../../WINDOWS_PORT_PLAN.md) (repo root).  
 **IT / security brief:** [`docs/IT_SECURITY_REVIEW.md`](../../docs/IT_SECURITY_REVIEW.md)
@@ -162,5 +164,5 @@ Defaults use `Path.home() / "edupulse" / ...` — no Linux-only `/home/...` requ
 
 ---
 
-*This file is the primary live-ops guide. Raspberry Pi / ALSA docs under
-`hardware/capture/*` are historical/optional only.*
+*Windows school PC and Linux lab are both supported. Raspberry Pi / ALSA
+docs under `hardware/capture/*` are historical/optional only.*

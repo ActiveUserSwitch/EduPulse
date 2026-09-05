@@ -1,0 +1,22 @@
+[Unit]
+Description=EduPulse daily large-v3 capture upgrade (AC/shore power only)
+Documentation=file:%h/Documents/GrokBuild/EduPulse/scripts/systemd/README-heavy-upgrade.md
+
+[Service]
+Type=oneshot
+ExecStart=%h/bin/edupulse-heavy-upgrade-daily.sh
+
+# Quiet background work after school
+Nice=15
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=EDUPULSE_WHISPER_DEVICE=cpu
+Environment=EDUPULSE_HEAVY_REQUIRE_AC=1
+Environment=EDUPULSE_HEAVY_MAX_AGE_DAYS=30
+# Uncomment if your repo lives elsewhere:
+# Environment=EDUPULSE_ROOT=%h/Documents/GrokBuild/EduPulse
+
+[Install]
+WantedBy=default.target

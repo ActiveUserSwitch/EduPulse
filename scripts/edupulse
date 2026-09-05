@@ -1,0 +1,222 @@
+#!/usr/bin/env bash
+# EduPulse one-command launcher: type `edupulse` to start school-day capture.
+#
+# Defaults (best live accuracy; printout may lag behind radio):
+#   --transcribe --model large-v3 --language en
+#   prints: >>> Speaker: transcript   (speaker from text heuristic / staff list)
+#   --data-dir ~/edupulse/captures
+#   --session school-day
+#   auto UCA222 / preferred USB input (via record_with_transcribe)
+#   staff_names.txt + common_words.txt when present
+#
+# Usage:
+#   edupulse                 # capture + large-v3 Whisper (Ctrl+C to stop)
+#   edupulse devices         # list sound inputs
+#   edupulse preview         # levels only, no files
+#   edupulse help
+#   edupulse --session finals --device 2
+#   edupulse --no-transcribe # WAV only (no live Whisper)
+#   edupulse --model small   # lighter/faster live model if lag is too high
+#
+# Env overrides:
+#   EDUPULSE_ROOT   repo path
+#   EDUPULSE_PYTHON python binary (default: ~/edupulse-env/bin/python)
+#   EDUPULSE_SESSION  default session label (default: school-day)
+#   EDUPULSE_MODEL    live Whisper model (default: large-v3)
+
+set -euo pipefail
+
+resolve_root() {
+  if [[ -n "${EDUPULSE_ROOT:-}" && -f "${EDUPULSE_ROOT}/hardware/capture/record_with_transcribe.py" ]]; then
+    echo "$EDUPULSE_ROOT"
+    return
+  fi
+  local c
+  for c in \
+    "$HOME/edupulse-code" \
+    "$HOME/Documents/GrokBuild/EduPulse" \
+    "$HOME/edupulse" \
+    "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  do
+    if [[ -f "$c/hardware/capture/record_with_transcribe.py" ]]; then
+      echo "$c"
+      return
+    fi
+  done
+  echo "ERROR: EduPulse repo not found. Set EDUPULSE_ROOT or clone to ~/Documents/GrokBuild/EduPulse" >&2
+  exit 1
+}
+
+ROOT="$(resolve_root)"
+CAPTURE="$ROOT/hardware/capture/record_with_transcribe.py"
+PY="${EDUPULSE_PYTHON:-$HOME/edupulse-env/bin/python}"
+if [[ ! -x "$PY" ]]; then
+  PY="$(command -v python3)"
+fi
+
+DATA_DIR="${EDUPULSE_DATA_DIR:-$HOME/edupulse/captures}"
+SESSION="${EDUPULSE_SESSION:-school-day}"
+STAFF="$ROOT/hardware/capture/staff_names.txt"
+RADIO="$ROOT/hardware/capture/radio_staff.txt"
+WORDS="$ROOT/hardware/capture/common_words.txt"
+STAFF_EX="$ROOT/hardware/capture/staff_names.example.txt"
+WORDS_EX="$ROOT/hardware/capture/common_words.example.txt"
+
+ensure_fingerprints() {
+  mkdir -p "$DATA_DIR"
+  if [[ ! -f "$STAFF" && -f "$STAFF_EX" ]]; then
+    cp "$STAFF_EX" "$STAFF"
+    echo "Created $STAFF from example — edit with real names when you can."
+  fi
+  if [[ ! -f "$WORDS" && -f "$WORDS_EX" ]]; then
+    cp "$WORDS_EX" "$WORDS"
+    echo "Created $WORDS from example — edit with radio jargon when you can."
+  fi
+}
+
+usage() {
+  cat <<EOF
+edupulse — start EduPulse radio capture with sensible defaults
+
+  edupulse              Capture + large-v3 Whisper (printout may lag) → ~/edupulse/captures/
+  edupulse devices      List audio input devices
+  edupulse preview      Meter levels (no files)
+  edupulse note "…"     Append a human day-context note (fire drill, early release, …)
+  edupulse context      Show DAY_CONTEXT.md for latest (or --day YYYY-MM-DD)
+  edupulse compare-tx   Idle heavy re-TX vs live sidecars (stop capture first)
+  edupulse repair-tx    Offline LLM repair (default: local Ollama — not api.x.ai)
+  edupulse help         This help
+
+Day context examples:
+  edupulse note "Fire drill mid-morning"
+  edupulse note "Fire drill" --tag fire_drill --when "~09:15"
+  edupulse context --day 2026-08-28
+
+Compare live vs offline (EduPulse must be idle):
+  edupulse compare-tx --day 2026-09-01_school-day --limit 20
+  edupulse compare-tx --wav ~/edupulse/captures/.../tx_....wav --also-no-prompt
+
+LLM repair (full lexicon; after school / idle; default Ollama = $0 API):
+  edupulse repair-tx --day 2026-09-04_school-day --only-low-conf --apply
+  edupulse repair-tx --wav …/tx_….wav --backend queue   # for Grok Build / grokbot
+  # --backend xai is metered api.x.ai — do not use unless you want API spend
+
+Any extra flags go to record_with_transcribe.py, e.g.:
+  edupulse --session graduation --max-duration 600
+  edupulse --device 3
+  edupulse --no-transcribe          # WAV only
+  edupulse --model small            # faster live model if lag is too high
+  edupulse --no-speaker-id          # Whisper only (A/B test vs pyannote load)
+  edupulse --pre-roll-sec 1.25      # default preamble (already 1.25s)
+
+Stop a running capture with Ctrl+C.
+
+Repo: $ROOT
+Python: $PY
+EOF
+}
+
+cmd="${1:-}"
+case "$cmd" in
+  help|-h|--help)
+    usage
+    exit 0
+    ;;
+  devices|list-devices|--list-devices)
+    shift || true
+    exec "$PY" "$CAPTURE" --list-devices "$@"
+    ;;
+  preview|--preview)
+    shift || true
+    ensure_fingerprints
+    # Prefer dedicated preview helper if present
+    if [[ -f "$ROOT/hardware/capture/edupulse-record" ]]; then
+      exec "$PY" "$ROOT/hardware/capture/edupulse-record" --preview "$@"
+    fi
+    exec "$PY" "$CAPTURE" --list-devices
+    ;;
+  note|context)
+    # Human day-context notes (fire drill, etc.) — does not start capture
+    shift || true
+    export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
+    exec "$PY" -m edupulse.day_context_cli "$cmd" "$@"
+    ;;
+  compare-tx|compare_tx)
+    # Isolated large-v3 re-TX vs stored live transcripts (refuses if live is running)
+    shift || true
+    export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
+    exec "$PY" "$ROOT/hardware/capture/compare_live_offline_tx.py" "$@"
+    ;;
+  repair-tx|repair_tx)
+    # Offline SpaceXAI repair using full staff/places lexicon
+    shift || true
+    export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
+    exec "$PY" "$ROOT/hardware/capture/repair_sidecars.py" "$@"
+    ;;
+  "")
+    ;;
+  *)
+    # First token looks like a flag → fall through to capture with all args
+    if [[ "$cmd" == -* ]]; then
+      :
+    else
+      echo "Unknown subcommand: $cmd (try: edupulse help)" >&2
+      exit 2
+    fi
+    ;;
+esac
+
+ensure_fingerprints
+
+# Build default argv; user flags appended (later flags can override where argparse allows)
+LIVE_MODEL="${EDUPULSE_MODEL:-large-v3}"
+args=(
+  --data-dir "$DATA_DIR"
+  --session "$SESSION"
+  --language en
+)
+
+# Live large-v3 by default (WAV saved immediately; transcript print may lag)
+want_tx=1
+has_model=0
+pass=()
+for a in "$@"; do
+  case "$a" in
+    --no-transcribe) want_tx=0; pass+=("$a") ;;
+    --transcribe) want_tx=1 ;;
+    --model) has_model=1; pass+=("$a") ;;
+    --model=*) has_model=1; pass+=("$a") ;;
+    *) pass+=("$a") ;;
+  esac
+done
+
+if [[ "$want_tx" -eq 1 ]]; then
+  args+=(--transcribe)
+  if [[ "$has_model" -eq 0 ]]; then
+    args+=(--model "$LIVE_MODEL")
+  fi
+fi
+
+if [[ -f "$STAFF" ]]; then
+  args+=(--known-staff-file "$STAFF")
+fi
+if [[ -f "$RADIO" ]]; then
+  args+=(--radio-staff-file "$RADIO")
+fi
+if [[ -f "$WORDS" ]]; then
+  args+=(--common-words-file "$WORDS")
+fi
+
+echo "EduPulse → $ROOT"
+echo "Python   → $PY"
+echo "Output   → $DATA_DIR/<date>_${SESSION}/"
+if [[ "$want_tx" -eq 1 ]]; then
+  echo "Mode     → live ${LIVE_MODEL} Whisper (WAVs immediate; on-screen print may lag)"
+else
+  echo "Mode     → WAV only (--no-transcribe)"
+fi
+echo "Stop with Ctrl+C"
+echo
+
+cd "$ROOT"
+exec "$PY" "$CAPTURE" "${args[@]}" "${pass[@]}"

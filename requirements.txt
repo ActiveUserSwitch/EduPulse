@@ -8,6 +8,12 @@ numpy>=1.26
 scipy>=1.13
 faster-whisper>=1.0.0   # for test/test_whisper.py and future transcription pipeline
 
+# Offline LLM transcript repair (SpaceXAI / xAI OpenAI-compatible API)
+openai>=1.40.0
+
+# Grok STT (edupulse.grok_stt) — multipart keyterms need requests, not curl -F
+requests>=2.31.0
+
 # Dev / convenience (optional)
 # pip install -r requirements.txt
 

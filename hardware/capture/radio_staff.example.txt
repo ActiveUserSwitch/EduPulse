@@ -1,0 +1,7 @@
+# EduPulse — staff who USE / are called on the radio (example)
+# Copy to radio_staff.txt and edit. Whisper fingerprint uses this subset.
+# Keep full staff_names.txt for IncidentTracker / name resolve.
+#
+# Mr. Aaron Mayes
+# Ms. Cheryl Yannett
+# Dr. Tracy Strickland

@@ -129,11 +129,22 @@ from edupulse.analysis import (
     IncidentTracker,
     is_likely_noise,
 )
+try:
+    from edupulse.speaker import (
+        default_speaker_db_path,
+        get_persistent_speaker_database,
+        process_transmission_speaker,
+    )
+except Exception:  # pragma: no cover
+    default_speaker_db_path = None  # type: ignore
+    get_persistent_speaker_database = None  # type: ignore
+    process_transmission_speaker = None  # type: ignore
 
 # =============================================================================
 # Audio helpers (shared)
 # =============================================================================
 from edupulse.audio_io import db, downmix_to_mono, find_uca222, get_levels
+from edupulse.day_context import ensure_day_context
 from edupulse.sidecar import build_sidecar, process_transcript
 
 SAMPLE_RATE = 16000
@@ -171,7 +182,8 @@ def run_capture(
     min_speech_sec: float = 0.3,
     max_segment_sec: float = 30.0,
     tail_padding_sec: float = 0.4,  # extra audio appended after silence detected, to avoid cutting off the end of transmissions and make playback feel more natural (not choppy/abrupt)
-    pre_roll_sec: float = 0.25,  # audio to include *before* the energy first crosses the speech threshold (via rolling lookback buffer). Prevents the beginning of transmissions from being cut off slightly.
+    pre_roll_sec: float = 1.25,  # seconds before energy threshold (was 0.25; +1s to catch soft radio onsets)
+    enable_speaker_id: bool = True,  # pyannote voice ID after Whisper (does not alter audio; can be disabled)
     model_name: str = "tiny",
     language: str | None = None,
     max_duration: float | None = None,
@@ -181,6 +193,7 @@ def run_capture(
     transcribe: bool = True,
     skip_calibration: bool = False,
     known_staff_names: list[str] | None = None,
+    radio_staff_names: list[str] | None = None,
     common_words: list[str] | None = None,
 ):
     """Long-running VAD capture + optional real-time light transcription + full metadata persistence.
@@ -240,13 +253,19 @@ def run_capture(
     if max_duration:
         print(f"Max duration      : {max_duration:.0f} s (test mode)")
 
-    # Use fingerprint (known staff + common words) to build the best possible Whisper prompt.
-    # This is the main way the "audio fingerprint" helps real-time transcription accuracy.
+    # Whisper fingerprint: prefer radio-users list (small) over full staff roster.
+    # Full known_staff_names still drives IncidentTracker + enrollment resolve.
+    prompt_staff = radio_staff_names or known_staff_names
     initial_prompt = build_enhanced_initial_prompt(
         base=initial_prompt,
-        known_staff=known_staff_names,
+        known_staff=prompt_staff,
         common_words=common_words,
     )
+    if radio_staff_names:
+        print(
+            f"Whisper fingerprint staff: {len(radio_staff_names)} radio users "
+            f"(full staff list still {len(known_staff_names or [])} for resolve)"
+        )
 
     if skip_calibration:
         print()
@@ -263,6 +282,7 @@ def run_capture(
     print("  - tx_YYYY-MM-DD_HH-MM-SS_dur.wav   (raw stereo 16-bit PCM per transmission)")
     print("  - tx_....json                      (sidecar: transcription, INC, confs, students, roles, ...)")
     print("  - session_manifest.jsonl           (one compact line per tx - easy to analyze)")
+    print("  - DAY_CONTEXT.md                   (your notes: fire drill, early release, …)")
     print("  - session_summary.json + info.json at end")
     print()
     print("CONTROLS / TIPS:")
@@ -271,10 +291,16 @@ def run_capture(
     print("  - Students (full First Last) are strong anchors for INC-xxx. Role calls (Mr./Coach/Nurse/...)")
     print("    usually start a fresh INC unless linked by a student mention.")
     print("  - Noise/static segments are auto-bucketed (Noise / Squelch / Hallucination) and do not create INCs.")
+    print("  - Day events: edupulse note \"Fire drill ~09:15\"   (writes DAY_CONTEXT.md)")
     print("  - Press Ctrl+C for clean stop (flushes work, writes summary).")
     print("=" * 72)
     print("\nStarting in 3 seconds...\n")
     time.sleep(3)
+
+    # Human day-context stub (fire drill, early release, etc.)
+    day_ctx = ensure_day_context(session_dir, session_name=session_dir.name)
+    print(f"Day context file: {day_ctx}")
+    print("  Add notes anytime: edupulse note \"Fire drill mid-morning\"\n")
 
     # Write session info for reproducibility
     session_info = {
@@ -282,6 +308,7 @@ def run_capture(
         "session_label": session_label,
         "data_dir": str(data_dir),
         "session_dir": str(session_dir),
+        "day_context_md": str(day_ctx),
         "args": {
             "speech_threshold_db": speech_threshold_db,
             "silence_timeout": silence_timeout,
@@ -308,14 +335,37 @@ def run_capture(
         except ImportError:
             print("ERROR: faster-whisper not installed. pip install faster-whisper")
             sys.exit(1)
-        print("Loading Whisper model for real-time (this can take a moment on first run)...")
+        print(f"Loading Whisper model '{model_name}' for live transcription (first load can take a while)...")
+        print("  Note: WAVs are written as soon as each tx ends; on-screen text may lag behind the radio.")
+        print("  Prints/manifest lines always emit in *receive* order (seq), even if work finishes unevenly.")
         whisper_model = WhisperModel(model_name, device="cpu", compute_type="int8")
-        print("Model ready.\n")
+        print(f"Model ready: {model_name} (cpu/int8)\n")
 
     tracker = IncidentTracker(known_staff_names=known_staff_names)  # one tracker for the whole day/session
 
+    # Continual voice ID — lazy-init AFTER Whisper so pyannote doesn't compete at load time.
+    # Speaker ID never modifies the audio fed to Whisper; it only reads the saved WAV after.
+    speaker_db = None
+    speaker_db_path = None
+    pending_callee: str | None = None  # next TX likely this person (just called)
+    speaker_id_enabled = bool(enable_speaker_id and transcribe and process_transmission_speaker is not None)
+    if speaker_id_enabled:
+        speaker_db_path = default_speaker_db_path() if default_speaker_db_path else None
+        print(f"Speaker voice ID: ON (lazy load) → {speaker_db_path}")
+        print("  Enroll gold: 'Name1 to Name2' then 'Go for Name2' / 'This is Name2'.")
+        print("  (Does NOT assume next voice is the callee — too often someone else keys up.)")
+        print("  Disable with --no-speaker-id if you want to A/B test transcription quality.")
+    else:
+        print("Speaker voice ID: OFF")
+
     stop_event = threading.Event()
-    segment_queue: queue.Queue = queue.Queue(maxsize=30)  # a bit larger buffer for long day
+    # Deep queue so large-v3 lag does not drop tx while capture keeps saving WAVs
+    _qsize = 200 if str(model_name).startswith("large") else 80
+    segment_queue: queue.Queue = queue.Queue(maxsize=_qsize)
+    # Receive-order emit: print + manifest only in seq order
+    next_emit_seq = 1
+    emit_buffer: dict[int, dict] = {}
+    emit_lock = threading.Lock()
 
     total_start = time.time()
     last_level_print = 0.0
@@ -517,8 +567,12 @@ def run_capture(
                 if is_speech:
                     if not is_speaking:
                         is_speaking = True
-                        # Prepend the recent pre-roll so the beginning isn't cut off (ramp-up energy before threshold crossed)
-                        audio_buffer = pre_buffer[:] + [audio.copy()]
+                        # Start buffer from the rolling pre-roll ONLY.
+                        # `audio` was already appended to pre_buffer above this frame —
+                        # concatenating it again duplicated ~64ms and sounded like a
+                        # skip/jitter on the first syllable (confirmed on 2026-09-04
+                        # Harris/Coach clips: exact duplicate block at ~1.15s).
+                        audio_buffer = pre_buffer[:]
                         segment_start_time = now
                         silence_start = None
                         segment_done_time = None
@@ -583,14 +637,32 @@ def run_capture(
                         }
 
                         tx_count += 1
+                        seq = tx_count  # receive order (1-based); preserved for print/manifest
                         total_speech_sec += duration
 
                         # Enqueue for worker (transcription + meta writing)
-                        item = (mono_audio, wall_dt, duration, str(wav_path) if wav_path else None, seg_levels)
+                        item = (
+                            seq,
+                            mono_audio,
+                            wall_dt,
+                            duration,
+                            str(wav_path) if wav_path else None,
+                            seg_levels,
+                        )
                         try:
-                            segment_queue.put_nowait(item)
+                            # Block briefly instead of dropping — order/completeness > latency
+                            segment_queue.put(item, timeout=30.0)
                         except queue.Full:
-                            print("\nWarning: analysis queue full, dropping a transmission.")
+                            print(
+                                f"\nWarning: analysis queue full for 30s — "
+                                f"still saving WAV seq={seq} {wav_name}; transcript may be delayed."
+                            )
+                            try:
+                                segment_queue.put(item, timeout=120.0)
+                            except queue.Full:
+                                print(
+                                    f"\nERROR: could not enqueue seq={seq}; WAV kept on disk for offline upgrade."
+                                )
 
                     # reset for next tx
                     audio_buffer = []
@@ -613,32 +685,65 @@ def run_capture(
                 except Exception:
                     pass
 
+    def _flush_ordered_emits() -> None:
+        """Print + append manifest strictly in receive (seq) order."""
+        nonlocal next_emit_seq
+        while next_emit_seq in emit_buffer:
+            ev = emit_buffer.pop(next_emit_seq)
+            for line in ev.get("print_lines") or []:
+                print(line)
+            ment = ev.get("manifest_entry")
+            if ment is not None:
+                try:
+                    with open(manifest_path, "a") as mf:
+                        mf.write(json.dumps(ment, ensure_ascii=False) + "\n")
+                except Exception as e:
+                    print(f"Warning: failed to append to manifest: {e}")
+            next_emit_seq += 1
+
     def analysis_worker():
-        """Background worker: (optional) Whisper + categorize + INC + write .json + manifest line + print."""
-        nonlocal total_speech_sec
-        while not stop_event.is_set() or not segment_queue.empty():
+        """Background worker: Whisper first, then optional speaker ID; emit in receive order."""
+        nonlocal total_speech_sec, speaker_db, pending_callee
+        while not stop_event.is_set() or not segment_queue.empty() or emit_buffer:
             try:
-                mono_audio, wall_dt, duration, wav_path_str, seg_levels = segment_queue.get(timeout=0.5)
+                seq, mono_audio, wall_dt, duration, wav_path_str, seg_levels = segment_queue.get(timeout=0.5)
                 wall_ts = wall_dt.strftime("%H:%M:%S")
-                print(f"\n[{wall_ts}] >>> Processing {duration:.1f}s transmission...")
+                # Do not print "Processing" immediately — that races ahead of earlier seq prints.
+                # Status is included in the ordered emit block below.
 
                 cat_result = {"category": "Other / Unclear", "confidence": 0.0, "matched_keywords": []}
                 transcription = ""
+                transcription_raw = ""
                 conf = 0.0
                 inc_id = "INC-000"
                 students: list[str] = []
                 roles: list[str] = []
                 cat_str = "Other / Unclear"
                 cat_conf = 0.0
+                likely_speaker: str | None = None
+                likely_speaker_conf: str = "none"
+                primary_speaker: str | None = None
+                speaker_conf_val: float | None = None
+                speaker_source: str | None = None
+                radio_caller: str | None = None
+                radio_callee: str | None = None
+                enrolled_names: list[str] = []
+                speaker_tentative = False
+                speaker_best: str | None = None
+                speaker_best_score: float | None = None
+                print_lines: list[str] = [
+                    f"\n[{wall_ts}] >>> seq={seq} Processing {duration:.1f}s transmission..."
+                ]
 
                 if transcribe and whisper_model is not None:
                     try:
+                        # --- Whisper ONLY on in-memory mono (never altered by pyannote) ---
                         segments, info = whisper_model.transcribe(
                             mono_audio,
                             beam_size=beam_size,
                             temperature=temperature,
                             initial_prompt=initial_prompt,
-                            language=language,
+                            language=language or "en",
                             vad_filter=False,
                             condition_on_previous_text=False,
                         )
@@ -646,7 +751,16 @@ def run_capture(
                         if seg_list:
                             seg = seg_list[0]  # we already segmented
                             conf = math.exp(seg.avg_logprob)
-                            transcription = seg.text.strip()
+                            transcription_raw = seg.text.strip()
+                            # Codes are prompt-only; display/sidecar use canonical last names.
+                            try:
+                                from edupulse.name_codebook import expand_transcript_names
+
+                                transcription, transcription_raw = expand_transcript_names(
+                                    transcription_raw
+                                )
+                            except Exception:
+                                transcription = transcription_raw
 
                             domain = process_transcript(
                                 transcription,
@@ -655,6 +769,60 @@ def run_capture(
                                 tracker=tracker,
                                 timestamp=wall_dt,
                             )
+
+                            # Speaker ID AFTER Whisper (optional). Lazy-load embedder once.
+                            if (
+                                speaker_id_enabled
+                                and wav_path_str
+                                and not domain.get("is_noise")
+                            ):
+                                try:
+                                    if speaker_db is None and get_persistent_speaker_database is not None:
+                                        speaker_db = get_persistent_speaker_database(path=speaker_db_path)
+                                        if speaker_db is not None:
+                                            print_lines.append(
+                                                f"  (speaker DB ready: {len(speaker_db.known_speakers())} profiles)"
+                                            )
+                                    if speaker_db is not None and process_transmission_speaker is not None:
+                                        spk = process_transmission_speaker(
+                                            wav_path_str,
+                                            transcription,
+                                            known_staff_names or [],
+                                            db=speaker_db,
+                                            db_path=speaker_db_path,
+                                            persist=True,
+                                            pending_callee=pending_callee,
+                                        )
+                                        likely_speaker = spk.get("likely_speaker")
+                                        likely_speaker_conf = spk.get("likely_speaker_conf") or "none"
+                                        primary_speaker = spk.get("primary_speaker")
+                                        speaker_conf_val = spk.get("speaker_conf")
+                                        speaker_source = spk.get("speaker_source")
+                                        radio_caller = spk.get("caller")
+                                        radio_callee = spk.get("callee") or spk.get("addressed")
+                                        enrolled_names = list(spk.get("enrolled") or [])
+                                        pending_callee = spk.get("pending_callee_out")
+                                        speaker_tentative = bool(spk.get("speaker_tentative"))
+                                        speaker_best = spk.get("speaker_best")
+                                        speaker_best_score = spk.get("speaker_best_score")
+                                except Exception as e:
+                                    print_lines.append(f"  (speaker ID warn: {e})")
+
+                            # Prefer miss ("?") over a wrong confident name.
+                            # Tentative guesses are clearly marked and not stored as hard primary.
+                            if primary_speaker and not speaker_tentative:
+                                speaker_label = primary_speaker
+                            elif speaker_tentative and speaker_best:
+                                sc = f"{speaker_best_score:.2f}" if speaker_best_score is not None else "?"
+                                speaker_label = f"~{speaker_best}? ({sc})"
+                            elif (
+                                likely_speaker
+                                and likely_speaker_conf in ("gold", "strong", "protocol")
+                            ):
+                                speaker_label = likely_speaker
+                            else:
+                                speaker_label = "?"
+
                             if domain["is_noise"]:
                                 cat_str = "Noise / Squelch / Hallucination"
                                 cat_conf = 0.95
@@ -662,11 +830,11 @@ def run_capture(
                                 inc_id = "NOISE"
                                 students = []
                                 roles = []
-                                print(
-                                    f"[{wall_ts} +{seg.start:5.1f}s] "
-                                    f"[NOISE] (conf {conf:.2f}) "
-                                    f"duration {duration:.1f}s — likely static/hallucination, skipping INC linking"
+                                print_lines.append(
+                                    f"[{wall_ts}] [seq={seq}] [NOISE] (conf {conf:.2f}) "
+                                    f"duration {duration:.1f}s — likely static/hallucination"
                                 )
+                                print_lines.append(f"  >>> {speaker_label}: {transcription}")
                             else:
                                 cat_str = domain["category"]
                                 cat_conf = domain["cat_conf"]
@@ -678,30 +846,34 @@ def run_capture(
                                 inc_id = domain["incident_id"]
                                 students = domain.get("students") or []
                                 roles = domain.get("roles") or []
-                                print(
-                                    f"[{wall_ts} +{seg.start:5.1f}s] "
-                                    f"[{inc_id}] "
+                                src = speaker_source or likely_speaker_conf
+                                print_lines.append(
+                                    f"[{wall_ts}] [seq={seq}] [{inc_id}] "
                                     f"(conf {conf:.2f}) "
                                     f"[{cat_str} conf:{cat_conf:.2f}] "
-                                    f"{transcription}"
+                                    f"[spk:{src}"
+                                    f"{f' {speaker_conf_val:.2f}' if speaker_conf_val else ''}]"
+                                    + (f" enrolled={enrolled_names}" if enrolled_names else "")
                                 )
+                                print_lines.append(f"  >>> {speaker_label}: {transcription}")
                             category_counts[cat_str] = category_counts.get(cat_str, 0) + 1
                         else:
-                            print(f"[{wall_ts}] (no speech in model output)")
+                            print_lines.append(f"[{wall_ts}] [seq={seq}] (no speech in model output)")
                     except Exception as e:
-                        print(f"Transcription/analysis error: {e}")
-                        # still write a minimal json with the audio ref
+                        print_lines.append(f"Transcription/analysis error (seq={seq}): {e}")
                         transcription = ""
                 else:
-                    # Pure capture or no model: still give a basic category from empty (Other) and a new INC?
-                    # For pure capture we can still run a trivial categorization or just mark as captured.
                     cat_result = {"category": "Other / Unclear", "confidence": 0.0, "matched_keywords": []}
                     cat_str = "Other / Unclear"
                     cat_conf = 0.0
                     inc_id = tracker.get_incident_id("", wall_dt, "Other / Unclear")
-                    print(f"[{wall_ts}] [CAPTURED] {duration:.1f}s raw -> {Path(wav_path_str).name if wav_path_str else 'no file'}")
+                    print_lines.append(
+                        f"[{wall_ts}] [seq={seq}] [CAPTURED] {duration:.1f}s raw -> "
+                        f"{Path(wav_path_str).name if wav_path_str else 'no file'}"
+                    )
 
-                # Write sidecar JSON (always, even in pure capture mode)
+                manifest_entry = None
+                # Write sidecar immediately (per-file; order irrelevant). Include seq.
                 if wav_path_str:
                     meta = build_sidecar(
                         audio_file=Path(wav_path_str).name,
@@ -720,35 +892,61 @@ def run_capture(
                         sample_rate=SAMPLE_RATE,
                         channels=CHANNELS,
                         levels=seg_levels,
+                        seq=seq,
+                        likely_speaker=likely_speaker,
+                        likely_speaker_conf=likely_speaker_conf,
+                        primary_speaker=primary_speaker,
+                        speaker_conf=speaker_conf_val,
+                        speaker_source=speaker_source,
+                        radio_caller=radio_caller,
+                        radio_callee=radio_callee,
+                        speaker_enrolled=enrolled_names or None,
+                        speaker_tentative=speaker_tentative or None,
+                        speaker_best=speaker_best,
+                        speaker_best_score=speaker_best_score,
+                        transcription_raw=transcription_raw or None,
                     )
                     try:
                         with open(Path(wav_path_str).with_suffix(".json"), "w") as jf:
                             json.dump(meta, jf, indent=2)
                     except Exception as e:
-                        print(f"Warning: failed to write sidecar json: {e}")
+                        print_lines.append(f"Warning: failed to write sidecar json: {e}")
 
-                    # Append to manifest (jsonl - append only, robust)
-                    try:
-                        manifest_entry = {
-                            "audio_file": meta["audio_file"],
-                            "start_iso": meta["start_iso"],
-                            "duration_sec": meta["duration_sec"],
-                            "transcription": transcription,
-                            "whisper_conf": meta.get("whisper_conf"),
-                            "category": meta["category"],
-                            "cat_conf": meta["cat_conf"],
-                            "incident_id": inc_id,
-                            "students": students,
-                            "roles": roles,
-                            "is_noise": meta.get("is_noise", False),
-                        }
-                        with open(manifest_path, "a") as mf:
-                            mf.write(json.dumps(manifest_entry, ensure_ascii=False) + "\n")
-                    except Exception as e:
-                        print(f"Warning: failed to append to manifest: {e}")
+                    manifest_entry = {
+                        "seq": seq,
+                        "audio_file": meta["audio_file"],
+                        "start_iso": meta["start_iso"],
+                        "duration_sec": meta["duration_sec"],
+                        "transcription": transcription,
+                        "whisper_conf": meta.get("whisper_conf"),
+                        "category": meta["category"],
+                        "cat_conf": meta["cat_conf"],
+                        "incident_id": inc_id,
+                        "students": students,
+                        "roles": roles,
+                        "is_noise": meta.get("is_noise", False),
+                        "likely_speaker": likely_speaker,
+                        "likely_speaker_conf": likely_speaker_conf,
+                        "primary_speaker": primary_speaker,
+                        "speaker_conf": speaker_conf_val,
+                        "speaker_source": speaker_source,
+                        "speaker_tentative": speaker_tentative,
+                        "speaker_best": speaker_best,
+                        "speaker_best_score": speaker_best_score,
+                    }
+
+                with emit_lock:
+                    emit_buffer[seq] = {
+                        "print_lines": print_lines,
+                        "manifest_entry": manifest_entry,
+                    }
+                    _flush_ordered_emits()
 
                 segment_queue.task_done()
             except queue.Empty:
+                # Still flush if anything pending (shouldn't, with single worker)
+                with emit_lock:
+                    _flush_ordered_emits()
                 continue
 
     # Start threads
@@ -862,23 +1060,33 @@ def main():
                         help="Seconds of silence to end a transmission segment (0.8s default for natural radio feel without cutting off ends; lower if rapid calls are merging into one tx). Use with --pre-roll-sec and --tail-padding-sec for clean segment boundaries.")
     parser.add_argument("--tail-padding-sec", type=float, default=0.4,
                         help="Extra seconds of audio (including low-energy tail) to keep at end of each segment. Helps prevent 'cutting off too early' and makes individual recordings sound less choppy/abrupt compared to real-time.")
-    parser.add_argument("--pre-roll-sec", type=float, default=0.25,
-                        help="Seconds of audio to prepend to each segment from just before speech was detected. Prevents the beginning of transmissions from being cut off slightly (common with energy VAD on signals that ramp up).")
+    parser.add_argument("--pre-roll-sec", type=float, default=1.25,
+                        help="Seconds of audio to prepend before speech threshold (default 1.25). "
+                             "Longer preamble catches soft radio onsets.")
+    parser.add_argument("--no-speaker-id", dest="enable_speaker_id", action="store_false",
+                        help="Disable pyannote voice ID (Whisper-only). Use to A/B test transcription quality.")
+    parser.set_defaults(enable_speaker_id=True)
     parser.add_argument("--min-speech-sec", type=float, default=0.3,
                         help="Ignore segments shorter than this (noise)")
     parser.add_argument("--max-segment-sec", type=float, default=30.0,
                         help="Force end of segment after this many seconds")
-    parser.add_argument("--model", default="tiny",
-                        help="Whisper model for *real-time* (tiny recommended for all-day; use test/test_whisper.py later for medium/large on the saved files)")
-    parser.add_argument("--language", default=None)
+    parser.add_argument("--model", default="large-v3",
+                        help="Whisper model for live transcription (default: large-v3). "
+                             "Capture never blocks on Whisper; printout may lag. "
+                             "Use --model small/base/tiny if the queue backs up on a weak CPU.")
+    parser.add_argument("--language", default="en",
+                        help="Force language for Whisper (default: en — avoids junk multilingual guesses)")
     parser.add_argument("--max-duration", type=float, default=None,
                         help="Stop after N seconds (useful for testing the tool)")
     parser.add_argument("--beam-size", type=int, default=5)
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--initial-prompt", default=None,
                         help="Base domain prompt for Whisper. If --known-staff or --common-words(-file) are provided, they are automatically merged in to build a strong 'audio fingerprint' prompt for better recognition of staff names and radio jargon.")
+    parser.set_defaults(transcribe=True)
     parser.add_argument("--no-transcribe", dest="transcribe", action="store_false",
                         help="Capture per-transmission .wav + basic meta only (no Whisper cost)")
+    parser.add_argument("--transcribe", dest="transcribe", action="store_true",
+                        help="Enable real-time Whisper (default unless --no-transcribe / edupulse launcher)")
     parser.add_argument("--list-categories", action="store_true",
                         help="List the current categories and exit")
     parser.add_argument("--sample-rate", type=int, default=16000)
@@ -888,7 +1096,13 @@ def main():
                              "The system will seed a conservative quiet floor and learn aggressively from the first real quiet gaps. "
                              "Strong warnings will be printed if the learned q~ stays high.")
     parser.add_argument("--known-staff", help="Comma-separated list of full teaching staff names for the audio fingerprint (e.g. 'Ms. Chandler,Mr. Moore,Dr. Strickland'). Improves name extraction and Whisper prompt.")
-    parser.add_argument("--known-staff-file", type=Path, help="Text file with one full staff name per line. Used to build the audio fingerprint for better role recognition and prompt biasing.")
+    parser.add_argument("--known-staff-file", type=Path, help="Text file with one full staff name per line. Used for IncidentTracker / resolve (full roster).")
+    parser.add_argument(
+        "--radio-staff-file",
+        type=Path,
+        help="Staff who USE the radio (subset). Whisper fingerprint prefers this when present; "
+        "full --known-staff-file still used for resolve/enrollment.",
+    )
     parser.add_argument("--common-words", help="Comma-separated list of common radio words/phrases for the fingerprint (e.g. 'chromebook,retake,500,monitoring'). Helps Whisper and categorization.")
     parser.add_argument("--common-words-file", type=Path, help="Text file with common broadcast words/phrases (one per line or space/comma separated). Builds the domain fingerprint for transcription.")
 
@@ -913,6 +1127,21 @@ def main():
             if line and not line.startswith("#"):
                 known_staff_names.append(line)
     known_staff_names = sorted(set(known_staff_names))
+
+    radio_staff_names: list[str] = []
+    radio_path = args.radio_staff_file
+    if radio_path is None:
+        # Default next to known-staff-file when present
+        if args.known_staff_file:
+            cand = args.known_staff_file.with_name("radio_staff.txt")
+            if cand.exists():
+                radio_path = cand
+    if radio_path and radio_path.exists():
+        for line in radio_path.read_text().splitlines():
+            line = line.strip()
+            if line and not line.startswith("#"):
+                radio_staff_names.append(line)
+    radio_staff_names = sorted(set(radio_staff_names))
 
     common_words: list[str] = []
     if args.common_words:
@@ -944,7 +1173,9 @@ def main():
         transcribe=args.transcribe,
         skip_calibration=args.skip_calibration,
         known_staff_names=known_staff_names,
+        radio_staff_names=radio_staff_names or None,
         common_words=common_words,
+        enable_speaker_id=args.enable_speaker_id,
     )
 
 

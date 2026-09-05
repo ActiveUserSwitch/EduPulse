@@ -4,9 +4,11 @@ Scripts for capturing and post-processing school radio traffic.
 
 **This is the active directory for the capture + offline iteration tools.**
 
-**Live capture primary target:** **Windows work PC** (see `WINDOWS_QUICKSTART.md`).  
-**Offline tools** run on Windows or Linux.  
-**Raspberry Pi / ALSA** material below is **optional / historical** only.
+| Host | Guide |
+|------|--------|
+| **Linux lab** (this desktop: capture + offline) | [`LINUX_QUICKSTART.md`](LINUX_QUICKSTART.md) |
+| **Windows work PC** (school live station) | [`WINDOWS_QUICKSTART.md`](WINDOWS_QUICKSTART.md) |
+| Raspberry Pi / `arecord` / `~/.asoundrc` | Optional / historical only |
 
 See the root `README.md` and `ROADMAP.md` for overall status.
 
@@ -14,6 +16,8 @@ See the root `README.md` and `ROADMAP.md` for overall status.
 
 - `record_with_transcribe.py` — Full-day / session capture (WAV + sidecar +
   `session_manifest.jsonl`). Prefer `--list-devices` then `--device N`.
+- `LINUX_QUICKSTART.md` — Linux env, devices, capture, retag.
+- `edupulse-record` — Linux short bring-up (`--preview` / `--duration`).
 - `edupulse-record.ps1` / `Setup-EduPulseWindows.ps1` — Windows launch + bootstrap.
 - `check_audio_environment.py` — Cross-platform device/package check (prefer this).
 - `retag_session.py` — Re-apply rules + fingerprint to a previous session.
@@ -31,7 +35,6 @@ See the root `README.md` and `ROADMAP.md` for overall status.
 
 ## Wiring & Hardware Notes
 
-Radio chain (any host): see `../wiring/Cobra_PX650_UCA222.md`  
-(Windows section first; Pi section labeled optional).
+Radio chain (any host): see `../wiring/Cobra_PX650_UCA222.md`.
 
 For IT / privacy (no live data in Git): `../../docs/IT_SECURITY_REVIEW.md`.

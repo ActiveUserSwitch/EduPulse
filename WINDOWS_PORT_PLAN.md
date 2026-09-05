@@ -16,8 +16,8 @@
 | Live light Whisper (tiny/base) during capture | **P1** | CPU or CUDA |
 | Offline large-v3 / retro_upgrade | **P1** | Same as Linux |
 | pyannote speaker layer | **P2** | Optional; torch + HF token |
-| Pi/ALSA docs (historical) | **P3** | Kept labeled optional; primary path is Windows |
-| systemd / bash launchers | **N/A** | Replace with PowerShell |
+| Pi/ALSA docs (historical) | **P3** | Kept labeled optional; Linux desktop uses `LINUX_QUICKSTART.md` |
+| systemd / bash launchers | **N/A** on Windows | Linux still uses bash/tmux; Windows uses PowerShell |
 
 **Non-goals:** Native WinUI app, MSI installer, rewriting analysis in C#, dropping pathlib, changing WAV/sidecar schema.
 

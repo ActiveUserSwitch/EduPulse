@@ -1,0 +1,16 @@
+# EduPulse — room → teacher assignments (copy to room_assignments.txt)
+#
+# Used as a soft speaker hint when radio traffic mentions a room in a
+# "phone pickup" / admin-call context: the assigned teacher is often the
+# person keying the radio.
+#
+# Format (one per line):
+#   ROOM|Canonical Staff Name
+#
+# Canonical name should match staff_names.txt exactly (Title First Last).
+# Lines starting with # are ignored.
+#
+# Examples:
+# 415|Ms. Michelle Broome
+# 700|Mr. Aaron Mayes
+# 212|Dr. Tracy Strickland

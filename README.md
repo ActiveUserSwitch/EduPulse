@@ -3,7 +3,8 @@
 **Lab location (Linux):** `~/Documents/GrokBuild/EduPulse` (this repo).  
 **Live data:** `~/edupulse` or `%USERPROFILE%\edupulse` (captures / processed — not in git).  
 **Shortcut (Linux):** `~/edupulse-code` → this directory.  
-**Windows work PC:** see [`hardware/capture/WINDOWS_QUICKSTART.md`](hardware/capture/WINDOWS_QUICKSTART.md) and [`WINDOWS_PORT_PLAN.md`](WINDOWS_PORT_PLAN.md).  
+**Run on Linux:** [`hardware/capture/LINUX_QUICKSTART.md`](hardware/capture/LINUX_QUICKSTART.md).  
+**Windows work PC:** [`hardware/capture/WINDOWS_QUICKSTART.md`](hardware/capture/WINDOWS_QUICKSTART.md) and [`WINDOWS_PORT_PLAN.md`](WINDOWS_PORT_PLAN.md).  
 **IT security review:** [`docs/IT_SECURITY_REVIEW.md`](docs/IT_SECURITY_REVIEW.md) — what is in Git, what stays local, mitigations.  
 Sibling Grok apps (ClipFinder, StockExplorer, …) live next to this folder under `GrokBuild/`, not inside this repo.
 
@@ -41,6 +42,15 @@ The most important outputs are the raw `.wav` files
   into the Whisper prompt and used by `IncidentTracker`
   so real staff are treated as roles (not fake students)
   and the model hears the actual language of this channel.
+  **Constraint:** Whisper only conditions on ~223 prompt
+  tokens (of 448 decoder slots) — see
+  [`docs/whisper_prompt_budget.md`](docs/whisper_prompt_budget.md)
+  and phonetic compression in
+  [`docs/name_codebook.md`](docs/name_codebook.md).
+  Offline LLM repair (full lexicon):
+  [`docs/transcript_repair.md`](docs/transcript_repair.md).
+  Capture artifacts (pre-roll onset duplicate + clipping) for dissertation:
+  [`docs/capture_artifacts_onset_jitter_and_clipping.md`](docs/capture_artifacts_onset_jitter_and_clipping.md).
 - **Offline iteration tools**:
   - `test/test_whisper.py` — re-transcribe any `.wav`
     with a better model + the current fingerprint.
@@ -86,8 +96,8 @@ the `.retagged.jsonl` versions after running retag.
 ## Essential Commands (after data collection)
 
 ```bash
-# Activate env
-cd ~/Documents/GrokBuild
+# Activate env (cwd must be the EduPulse repo)
+cd ~/Documents/GrokBuild/EduPulse
 source ~/edupulse-env/bin/activate
 
 # 1. Re-apply current rules + fingerprint to a session
@@ -131,24 +141,26 @@ technical details.
 See `hardware/capture/staff_names.example.txt` and
 `common_words.example.txt` for format.
 
-## Deployment (primary vs historical)
+## Deployment
 
 | Role | Where |
 |------|--------|
-| **Live capture (primary)** | **Windows work PC** — `hardware/capture/WINDOWS_QUICKSTART.md` |
-| Offline retag / Whisper / validation | Windows or Linux |
+| **Linux lab** (this desktop: live capture + offline) | `hardware/capture/LINUX_QUICKSTART.md` |
+| **Windows work PC** (school live station) | `hardware/capture/WINDOWS_QUICKSTART.md` |
 | IT security brief | `docs/IT_SECURITY_REVIEW.md` |
-| Raspberry Pi / ALSA bring-up | **Historical only** — see checklists under `hardware/capture/` marked optional/Pi |
+| Laptop now / Pi later (no school internet) | `hardware/capture/OFFLINE_AND_PI_PATH.md` + `scripts/make_offline_update_pack.sh` |
+| Raspberry Pi / ALSA bring-up | Optional — `QUICKSTART_ALREADY_RUNNING_PI.md`, `alsa_config.md` (see offline path above) |
 
 Hardware chain (same on any host): PX650 → UCA222 → USB → PC.
 
 ## Historical / Old Docs
 
-Old Pi bring-up checklists and the original plan live in
-`hardware/capture/` (names like `QUICKSTART_ALREADY_RUNNING_PI.md`,
-`check_pi_environment.py`, `alsa_config.md`). Useful if you ever
-run on a Pi again; **not** the active school-PC workflow.
-Current process: this README + `ROADMAP.md` + Windows quickstart.
+Old Pi bring-up checklists live in `hardware/capture/` (names like
+`QUICKSTART_ALREADY_RUNNING_PI.md`, `check_pi_environment.py`,
+`alsa_config.md`). Useful if you run on a Pi again; **not** the
+Linux-desktop or Windows-PC workflow.
+Current process: this README + `ROADMAP.md` + `LINUX_QUICKSTART.md`
+and/or `WINDOWS_QUICKSTART.md`.
 
 - This follows the radio protocol (name calls → ack →
   message → clarification) and prevents over-linking
@@ -211,7 +223,7 @@ All live captures use the heavy model (large-v3) for transcription. Sidecars nex
 **Retroactive upgrade for old days** is performed with:
 
 ```bash
-cd /home/joseph/Documents/GrokBuild
+cd /home/joseph/Documents/GrokBuild/EduPulse
 source ~/edupulse-env/bin/activate
 PYTHONPATH=. python hardware/capture/retro_upgrade_sidecars.py \
   --base-dir ~/edupulse/captures \
