@@ -35,6 +35,8 @@ data/transcripts/
 data/private/
 data/local/
 edupulse-data/
+research_export/
+**/research_export/
 
 # ---------------------------------------------------------------------------
 # Live fingerprints (real staff names / channel language — keep local only)
