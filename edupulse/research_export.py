@@ -6,6 +6,10 @@ name_codebook.py (that module expands aliases into real last names).
 
 Live PII stays in ~/edupulse/captures and gitignored fingerprint files.
 Export writes only to an output directory (default ~/edupulse/research_export).
+
+By default the analysis file includes a redacted transcript: staff names
+are replaced with role labels and student names with [STUDENT]. The raw
+transcript stays in the local sidecar.
 """
 from __future__ import annotations
 
@@ -15,18 +19,6 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
-
-KEEP_KEYS = (
-    "start_iso",
-    "duration_sec",
-    "category",
-    "cat_conf",
-    "is_noise",
-    "whisper_conf",
-    "model",
-    "critical_baseline",
-    "lexical_surprisal",
-)
 
 STRIP_KEYS = {
     "transcription",
@@ -61,7 +53,8 @@ _ROLE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("teacher", ("teacher", "coach", "ms.", "mr.", "mrs.", "mx.", "dr.")),
 )
 
-_NAME_TOKEN = re.compile(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b")
+_TITLE = {"ms.", "mr.", "mrs.", "mx.", "dr.", "nurse", "coach", "officer", "principal"}
+_NAME_TOKEN = re.compile(r"\b(?:Ms\.|Mr\.|Mrs\.|Mx\.|Dr\.)?\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b")
 
 
 def load_staff_names(path: Path | None) -> list[str]:
@@ -100,26 +93,52 @@ def hash_incident_id(incident_id: str, salt: str) -> str | None:
     return f"INC_{digest}"
 
 
-def _collect_name_needles(staff: list[str], students: Iterable[str]) -> list[str]:
-    needles: set[str] = set()
-    for name in list(staff) + list(students):
+def _name_parts(name: str) -> list[str]:
+    parts = [p for p in re.split(r"\s+", (name or "").strip()) if p]
+    return [p for p in parts if p.lower().strip(".") not in {t.strip(".") for t in _TITLE}]
+
+
+def redact_transcript(
+    text: str,
+    *,
+    staff: list[str],
+    students: Iterable[str],
+    roles: Iterable[str],
+) -> str:
+    """Replace known names. Raw text is not returned."""
+    out = text or ""
+    # Longest names first so "Jane Example" goes before "Jane".
+    staff_hits: list[tuple[str, str]] = []
+    for name in list(staff) + list(roles):
         name = (name or "").strip()
         if not name:
             continue
-        needles.add(name)
-        parts = [p for p in re.split(r"\s+", name) if p and p.lower() not in {"ms.", "mr.", "mrs.", "mx.", "dr.", "nurse", "coach", "officer"}]
+        label = f"[{role_bucket(name).upper()}]"
+        staff_hits.append((name, label))
+        parts = _name_parts(name)
         if parts:
-            needles.add(parts[-1])
-    return sorted(needles, key=len, reverse=True)
+            staff_hits.append((" ".join(parts), label))
+            staff_hits.append((parts[-1], label))
+    staff_hits.sort(key=lambda item: len(item[0]), reverse=True)
+    for needle, label in staff_hits:
+        out = re.sub(re.escape(needle), label, out, flags=re.IGNORECASE)
 
+    student_hits: list[str] = []
+    for name in students:
+        name = (name or "").strip()
+        if not name:
+            continue
+        student_hits.append(name)
+        parts = _name_parts(name)
+        if parts:
+            student_hits.append(" ".join(parts))
+            student_hits.append(parts[-1])
+    student_hits = sorted(set(student_hits), key=len, reverse=True)
+    for needle in student_hits:
+        out = re.sub(re.escape(needle), "[STUDENT]", out, flags=re.IGNORECASE)
 
-def scrub_text(text: str, needles: list[str]) -> str:
-    out = text or ""
-    for needle in needles:
-        if needle:
-            out = re.sub(re.escape(needle), "REDACTED", out, flags=re.IGNORECASE)
-    out = _NAME_TOKEN.sub("REDACTED", out)
-    return out
+    out = _NAME_TOKEN.sub("[PERSON]", out)
+    return re.sub(r"\s+", " ", out).strip()
 
 
 def _numeric_acoustics(features: Any) -> dict[str, float]:
@@ -134,17 +153,14 @@ def _numeric_acoustics(features: Any) -> dict[str, float]:
     return clean
 
 
-def _safe_info_score(blob: Any) -> dict[str, float | str] | None:
+def _safe_info_score(blob: Any) -> dict[str, float] | None:
     if not isinstance(blob, dict):
         return None
-    out: dict[str, float | str] = {}
+    out: dict[str, float] = {}
     for key in ("value", "lexical_surprisal", "acoustic_composite_z"):
         val = blob.get(key)
         if isinstance(val, (int, float)) and not isinstance(val, bool):
             out[key] = float(val)
-    ref = blob.get("reference")
-    if isinstance(ref, str) and ref:
-        out["reference"] = scrub_text(ref, [])
     return out or None
 
 
@@ -180,14 +196,10 @@ def looks_like_student_transmit(row: dict[str, Any]) -> bool:
     if "student_transmit" in tags:
         return True
     students = [s for s in (row.get("students") or []) if str(s).strip()]
-    roles = [r for r in (row.get("roles") or []) if str(r).strip()]
     speaker = (row.get("likely_speaker") or row.get("primary_speaker") or "")
     speaker_l = str(speaker).strip().lower()
     if students and speaker_l and any(s.lower() in speaker_l or speaker_l in s.lower() for s in students):
         return True
-    if students and not roles and not speaker_l:
-        # Mention-only traffic stays; this is a conservative drop only when tagged.
-        return False
     return False
 
 
@@ -197,6 +209,7 @@ def export_row(
     staff: list[str],
     salt: str,
     exclude_medical: bool = True,
+    include_redacted_transcript: bool = True,
     day_tags: list[str] | None = None,
     session_label: str | None = None,
 ) -> dict[str, Any] | None:
@@ -208,11 +221,7 @@ def export_row(
 
     students = [str(s) for s in (row.get("students") or []) if str(s).strip()]
     raw_roles = [str(r) for r in (row.get("roles") or []) if str(r).strip()]
-    role_codes = sorted({staff_role_code(r) for r in raw_roles + staff if r in raw_roles or r.lower() in " ".join(raw_roles).lower()})
-    if raw_roles:
-        role_codes = sorted({staff_role_code(r) for r in raw_roles})
-    else:
-        role_codes = []
+    role_codes = sorted({staff_role_code(r) for r in raw_roles}) if raw_roles else []
 
     tags = _safe_tags(list(row.get("tags") or []) + list(day_tags or []))
     out: dict[str, Any] = {
@@ -234,6 +243,13 @@ def export_row(
         "lexical_surprisal": row.get("lexical_surprisal"),
         "tags": tags,
     }
+    if include_redacted_transcript:
+        out["transcript_redacted"] = redact_transcript(
+            str(row.get("transcription") or ""),
+            staff=staff,
+            students=students,
+            roles=raw_roles,
+        )
     return out
 
 
@@ -284,6 +300,7 @@ def export_session(
     staff: list[str],
     salt: str,
     exclude_medical: bool = True,
+    include_redacted_transcript: bool = True,
 ) -> tuple[list[dict[str, Any]], dict[str, int]]:
     session_dir = Path(session_dir)
     source = _iter_source_rows(session_dir)
@@ -302,6 +319,7 @@ def export_session(
             staff=staff,
             salt=salt,
             exclude_medical=exclude_medical,
+            include_redacted_transcript=include_redacted_transcript,
             day_tags=tags,
             session_label=session_dir.name,
         )
@@ -322,6 +340,7 @@ def write_export(
     *,
     staff_file: Path | None = None,
     exclude_medical: bool = True,
+    include_redacted_transcript: bool = True,
     salt: str | None = None,
 ) -> Path:
     out_dir = Path(out_dir)
@@ -332,7 +351,11 @@ def write_export(
     session_stats: list[dict[str, Any]] = []
     for session in sessions:
         rows, stats = export_session(
-            session, staff=staff, salt=salt, exclude_medical=exclude_medical
+            session,
+            staff=staff,
+            salt=salt,
+            exclude_medical=exclude_medical,
+            include_redacted_transcript=include_redacted_transcript,
         )
         all_rows.extend(rows)
         session_stats.append({"session": Path(session).name, **stats})
@@ -346,10 +369,11 @@ def write_export(
     codebook.write_text(
         "# EduPulse research export codebook\n\n"
         "This folder is the analysis file. It is not the live capture store.\n\n"
-        "- `role_codes`: stable hashes of staff role labels (admin/teacher/nurse/sro/jrotc/facilities/other).\n"
-        "- `incident_id_hash`: salted hash of the live INC-id. Not reversible from this folder alone.\n"
-        "- `student_mention_count`: count only. No names.\n"
-        "- No transcripts, WAVs, staff names, student names, or speaker IDs.\n"
+        "- `transcript_redacted`: speech with staff names replaced by role labels and student names by [STUDENT].\n"
+        "- Raw transcripts and WAVs stay next to the live capture files.\n"
+        "- `role_codes`: stable hashes of staff role labels.\n"
+        "- `incident_id_hash`: salted hash of the live INC-id.\n"
+        "- `student_mention_count`: count only.\n"
         f"- Rows: {len(all_rows)}\n"
         f"- Medical category dropped: {exclude_medical}\n",
         encoding="utf-8",
@@ -361,6 +385,7 @@ def write_export(
                 "created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                 "sessions": session_stats,
                 "exclude_medical": exclude_medical,
+                "include_redacted_transcript": include_redacted_transcript,
                 "staff_file_used": bool(staff),
                 "n_rows": len(all_rows),
                 "wav_copied": False,
